@@ -1,37 +1,40 @@
 # coding=utf-8
 from prototypical_batch_sampler import PrototypicalBatchSampler
 from prototypical_loss import prototypical_loss as loss_fn
-from omniglot_dataset import OmniglotDataset
+from src.datasets.omniglot_dataset import OmniglotDataset
 from protonet import ProtoNet
 from parser_util import get_parser
-
+from src.datasets.miniimagenet import MiniImageNet
 from tqdm import tqdm
 import numpy as np
 import torch
 import os
 
-
-def init_seed(opt):
-    '''
-    Disable cudnn to maximize reproducibility
-    '''
-    torch.cuda.cudnn_enabled = False
-    np.random.seed(opt.manual_seed)
-    torch.manual_seed(opt.manual_seed)
-    torch.cuda.manual_seed(opt.manual_seed)
-
+options = get_parser().parse_args()
+device = torch.device(options.cuda)
 
 def init_dataset(opt, mode):
-    dataset = OmniglotDataset(mode=mode, root=opt.dataset_root)
+    if opt.dataset_name == 'omniglotDataset':
+        dataset = OmniglotDataset(mode=mode, root=opt.dataset_root)
+        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), opt=opt)
+        return dataset
+    elif opt.dataset_name == 'miniImagenet':
+        dataset = MiniImageNet(mode=mode, opt=options)
+        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), opt=opt)
+        return dataset
+
+    raise ValueError('Unsupported dataset_name {}'.format(opt.dataset_name))
+
+#region ##数据加载失败抛异常处理##
+def _dataset_exception_handle(dataset, n_classes, opt):
     n_classes = len(np.unique(dataset.y))
     if n_classes < opt.classes_per_it_tr or n_classes < opt.classes_per_it_val:
-        raise(Exception('There are not enough classes in the dataset in order ' +
-                        'to satisfy the chosen classes_per_it. Decrease the ' +
-                        'classes_per_it_{tr/val} option and try again.'))
-    return dataset
+        raise (Exception('There are not enough classes in the data in order ' +
+                         'to satisfy the chosen classes_per_it. Decrease the ' +
+                         'classes_per_it_{tr/val} option and try again.'))
+#endregion
 
-
-def init_sampler(opt, labels, mode):
+def init_sampler(opt, labels, mode, dataset_name='miniImagenet'):
     if 'train' in mode:
         classes_per_it = opt.classes_per_it_tr
         num_samples = opt.num_support_tr + opt.num_query_tr
@@ -56,8 +59,7 @@ def init_protonet(opt):
     '''
     Initialize the ProtoNet
     '''
-    device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
-    model = ProtoNet().to(device)
+    model = ProtoNet(x_dim=opt.channel).to(device)
     return model
 
 
@@ -89,8 +91,6 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     Train the model with the prototypical learning algorithm
     '''
 
-    device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
-
     if val_dataloader is None:
         best_state = None
     train_loss = []
@@ -108,17 +108,17 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         model.train()
         for batch in tqdm(tr_iter):
             optim.zero_grad()
-            x, y = batch
+            x, y = batch # x: (batch, C, H, W), y:(batch, )
             x, y = x.to(device), y.to(device)
-            model_output = model(x)
+            model_output = model(x) # (batch, z_dim(protonet的超参数决定))
             loss, acc = loss_fn(model_output, target=y,
                                 n_support=opt.num_support_tr)
             loss.backward()
             optim.step()
-            train_loss.append(loss.item())
-            train_acc.append(acc.item())
-        avg_loss = np.mean(train_loss[-opt.iterations:])
-        avg_acc = np.mean(train_acc[-opt.iterations:])
+            train_loss.append(loss.item().cpu())
+            train_acc.append(acc.item().cpu())
+        avg_loss = torch.mean(train_loss[-opt.iterations:])
+        avg_acc = torch.mean(train_acc[-opt.iterations:])
         print('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
         lr_scheduler.step()
         if val_dataloader is None:
@@ -131,8 +131,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             model_output = model(x)
             loss, acc = loss_fn(model_output, target=y,
                                 n_support=opt.num_support_val)
-            val_loss.append(loss.item())
-            val_acc.append(acc.item())
+            val_loss.append(loss.item().cpu())
+            val_acc.append(acc.item().cpu())
         avg_loss = np.mean(val_loss[-opt.iterations:])
         avg_acc = np.mean(val_acc[-opt.iterations:])
         postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
@@ -157,7 +157,6 @@ def test(opt, test_dataloader, model):
     '''
     Test the model trained with the prototypical learning algorithm
     '''
-    device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
     avg_acc = list()
     for epoch in range(10):
         test_iter = iter(test_dataloader)
@@ -167,7 +166,7 @@ def test(opt, test_dataloader, model):
             model_output = model(x)
             _, acc = loss_fn(model_output, target=y,
                              n_support=opt.num_support_val)
-            avg_acc.append(acc.item())
+            avg_acc.append(acc.item().cpu())
     avg_acc = np.mean(avg_acc)
     print('Test Acc: {}'.format(avg_acc))
 
@@ -178,12 +177,7 @@ def eval(opt):
     '''
     Initialize everything and train
     '''
-    options = get_parser().parse_args()
 
-    if torch.cuda.is_available() and not options.cuda:
-        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
-
-    init_seed(options)
     test_dataloader = init_dataset(options)[-1]
     model = init_protonet(options)
     model_path = os.path.join(opt.experiment_root, 'best_model.pth')
@@ -193,19 +187,20 @@ def eval(opt):
          test_dataloader=test_dataloader,
          model=model)
 
+def get_parameter_number(model):
+    total_num = sum(p.numel() for p in model.parameters())
+    trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return {'Total': total_num, 'Trainable': trainable_num}
 
 def main():
     '''
     Initialize everything and train
     '''
-    options = get_parser().parse_args()
+    '''
+    Namespace(dataset_root='../data', experiment_root='../output', epochs=100, learning_rate=0.001, lr_scheduler_step=20, lr_scheduler_gamma=0.5, iterations=100, classes_per_it_tr=60, num_support_tr=5, num_query_tr=5, classes_per_it_val=5, num_support_val=5, num_query_val=15, manual_seed=7, cuda=False)
+    '''
     if not os.path.exists(options.experiment_root):
         os.makedirs(options.experiment_root)
-
-    if torch.cuda.is_available() and not options.cuda:
-        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
-
-    init_seed(options)
 
     tr_dataloader = init_dataloader(options, 'train')
     val_dataloader = init_dataloader(options, 'val')
@@ -213,6 +208,8 @@ def main():
     test_dataloader = init_dataloader(options, 'test')
 
     model = init_protonet(options)
+
+    print(get_parameter_number(model))
     optim = init_optim(options, model)
     lr_scheduler = init_lr_scheduler(options, optim)
     res = train(opt=options,
@@ -232,22 +229,6 @@ def main():
     test(opt=options,
          test_dataloader=test_dataloader,
          model=model)
-
-    # optim = init_optim(options, model)
-    # lr_scheduler = init_lr_scheduler(options, optim)
-
-    # print('Training on train+val set..')
-    # train(opt=options,
-    #       tr_dataloader=trainval_dataloader,
-    #       val_dataloader=None,
-    #       model=model,
-    #       optim=optim,
-    #       lr_scheduler=lr_scheduler)
-
-    # print('Testing final model..')
-    # test(opt=options,
-    #      test_dataloader=test_dataloader,
-    #      model=model)
 
 
 if __name__ == '__main__':

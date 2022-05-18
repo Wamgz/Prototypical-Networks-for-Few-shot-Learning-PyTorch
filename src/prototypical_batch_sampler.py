@@ -17,7 +17,7 @@ class PrototypicalBatchSampler(object):
         '''
         Initialize the PrototypicalBatchSampler object
         Args:
-        - labels: an iterable containing all the labels for the current dataset
+        - labels: an iterable containing all the labels for the current data
         samples indexes will be infered from this iterable.
         - classes_per_it: number of random classes for each iteration
         - num_samples: number of samples for each iteration for each class (support + query)
@@ -49,17 +49,19 @@ class PrototypicalBatchSampler(object):
         '''
         yield a batch of indexes
         '''
-        spc = self.sample_per_class
-        cpi = self.classes_per_it
+        spc = self.sample_per_class #K
+        cpi = self.classes_per_it #N
 
         for it in range(self.iterations):
             batch_size = spc * cpi
             batch = torch.LongTensor(batch_size)
             c_idxs = torch.randperm(len(self.classes))[:cpi]
-            for i, c in enumerate(self.classes[c_idxs]):
+            for i, c in enumerate(self.classes[c_idxs]): #每次从所有的class中取60个class出来
                 s = slice(i * spc, (i + 1) * spc)
                 # FIXME when torch.argwhere will exists
+                # 先取一个label
                 label_idx = torch.arange(len(self.classes)).long()[self.classes == c].item()
+                # 再在这个label下取spc个样本
                 sample_idxs = torch.randperm(self.numel_per_class[label_idx])[:spc]
                 batch[s] = self.indexes[label_idx][sample_idxs]
             batch = batch[torch.randperm(len(batch))]

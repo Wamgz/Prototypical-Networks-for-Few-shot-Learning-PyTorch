@@ -32,19 +32,19 @@ class OmniglotDataset(data.Dataset):
     raw_folder = 'raw'
     processed_folder = 'data'
 
-    def __init__(self, mode='train', root='..' + os.sep + 'dataset', transform=None, target_transform=None, download=True):
+    def __init__(self, mode='train', root='../data/omniglotDataset', transform=None, target_transform=None, download=True):
         '''
         The items are (filename,category). The index of all the categories can be found in self.idx_classes
         Args:
-        - root: the directory where the dataset will be stored
+        - root: the directory where the data will be stored
         - transform: how to transform the input
         - target_transform: how to transform the target
-        - download: need to download the dataset
+        - download: need to download the data
         '''
         super(OmniglotDataset, self).__init__()
-        self.root = root
-        self.transform = transform
-        self.target_transform = target_transform
+        self.root = root # ../data
+        self.transform = transform # None
+        self.target_transform = target_transform # None
 
         if download:
             self.download()
@@ -55,12 +55,13 @@ class OmniglotDataset(data.Dataset):
         self.classes = get_current_classes(os.path.join(
             self.root, self.splits_folder, mode + '.txt'))
         self.all_items = find_items(os.path.join(
-            self.root, self.processed_folder), self.classes)
+            self.root, self.processed_folder), self.classes) # size: 13760, list: [('0739_02.png', 'Mkhedruli_(Georgian)/character11', '../data/data/Mkhedruli_(Georgian)/character11', '/rot000'), ····]
 
-        self.idx_classes = index_classes(self.all_items)
+        self.idx_classes = index_classes(self.all_items) # {key: 'Mkhedruli_(Georgian)/character11/rot000', value: 0}
 
         paths, self.y = zip(*[self.get_path_label(pl)
-                              for pl in range(len(self))])
+                              for pl in range(len(self))]) #paths: list, size: 13760, 格式：'../data/data/Mkhedruli_(Georgian)/character11/0739_02.png/rot000'，表示图片路径
+        #labels: list, size: 13760, 格式: 1(int)，表示上面的path的图片对应的标签
 
         self.x = map(load_img, paths, range(len(paths)))
         self.x = list(self.x)
@@ -75,8 +76,8 @@ class OmniglotDataset(data.Dataset):
         return len(self.all_items)
 
     def get_path_label(self, index):
-        filename = self.all_items[index][0]
-        rot = self.all_items[index][-1]
+        filename = self.all_items[index][0] #'0739_02.png'
+        rot = self.all_items[index][-1] #'/rot000'
         img = str.join(os.sep, [self.all_items[index][2], filename]) + rot
         target = self.idx_classes[self.all_items[index]
                                   [1] + self.all_items[index][-1]]
@@ -134,13 +135,13 @@ class OmniglotDataset(data.Dataset):
 
 
 def find_items(root_dir, classes):
-    retour = []
+    retour = [] #('0459_14.png', 'Gujarati/character42', '../data/data/Gujarati/character42', '/rot000')
     rots = [os.sep + 'rot000', os.sep + 'rot090', os.sep + 'rot180', os.sep + 'rot270']
     for (root, dirs, files) in os.walk(root_dir):
         for f in files:
             r = root.split(os.sep)
             lr = len(r)
-            label = r[lr - 2] + os.sep + r[lr - 1]
+            label = r[lr - 2] + os.sep + r[lr - 1] #'Gujarati/character42'
             for rot in rots:
                 if label + rot in classes and (f.endswith("png")):
                     retour.extend([(f, label, root, rot)])
@@ -150,7 +151,7 @@ def find_items(root_dir, classes):
 
 def index_classes(items):
     idx = {}
-    for i in items:
+    for i in items: #i: ('0459_14.png', 'Gujarati/character42', '../data/data/Gujarati/character42', '/rot000')
         if (not i[1] + i[-1] in idx):
             idx[i[1] + i[-1]] = len(idx)
     print("== Dataset: Found %d classes" % len(idx))
@@ -162,7 +163,7 @@ def get_current_classes(fname):
         classes = f.read().replace('/', os.sep).splitlines()
     return classes
 
-
+# 加载path指向的路径的图片，并且对图片进行旋转
 def load_img(path, idx):
     path, rot = path.split(os.sep + 'rot')
     if path in IMG_CACHE:
@@ -175,7 +176,7 @@ def load_img(path, idx):
 
     shape = 1, x.size[0], x.size[1]
     x = np.array(x, np.float32, copy=False)
-    x = 1.0 - torch.from_numpy(x)
+    x = 1.0 - torch.from_numpy(x) #TODO 为什么要这么做
     x = x.transpose(0, 1).contiguous().view(shape)
 
     return x

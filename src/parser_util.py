@@ -7,8 +7,27 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-root', '--dataset_root',
                         type=str,
-                        help='path to dataset',
-                        default='..' + os.sep + 'dataset')
+                        help='path to data',
+                        default='../data')
+    parser.add_argument('-dname', '--dataset_name',
+                        type=str,
+                        help='which dataset to use',
+                        default='miniImagenet')
+
+    parser.add_argument('-height', '--height',
+                        type=int,
+                        help='image resized height',
+                        default=0)
+
+    parser.add_argument('-width', '--width',
+                        type=int,
+                        help='image resized width',
+                        default=0)
+
+    parser.add_argument('-channel', '--channel',
+                        type=int,
+                        help='image resized width',
+                        default=3)
 
     parser.add_argument('-exp', '--experiment_root',
                         type=str,
@@ -43,7 +62,7 @@ def get_parser():
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,
                         help='number of random classes per episode for training, default=60',
-                        default=60)
+                        default=16)
 
     parser.add_argument('-nsTr', '--num_support_tr',
                         type=int,
@@ -76,7 +95,8 @@ def get_parser():
                         default=7)
 
     parser.add_argument('--cuda',
-                        action='store_true',
-                        help='enables cuda')
+                        type=str,
+                        help='use gpu or cpu',
+                        default='cpu')
 
     return parser
