@@ -33,7 +33,7 @@ class MiniImageNet(data.Dataset):
             self.transform = transforms.Compose(tsfm)
 
         #1、读取pkl文件
-        pkl_name = '{}/miniImagenet/mini-imagenet-cache-{}.pkl'.format(self.root, self.split)
+        pkl_name = '{}/miniImagenet/data/mini-imagenet-cache-{}.pkl'.format(self.root, self.split)
         print('Loading pkl data: {} '.format(pkl_name))
 
         try:
@@ -63,7 +63,8 @@ class MiniImageNet(data.Dataset):
         """
             load the pkl processed mini-imagenet into label,unlabel
         """
-        pkl_name = '{}/data/mini-imagenet-cache-{}.pkl'.format(self.root, self.split)
+
+        pkl_name = '{}/miniImagenet/data/mini-imagenet-cache-{}.pkl'.format(self.root, self.split)
         print('Loading pkl data: {} '.format(pkl_name))
 
         try:
