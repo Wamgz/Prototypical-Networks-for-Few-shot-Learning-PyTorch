@@ -6,8 +6,9 @@ import glob
 import csv
 import torch.utils.data as data
 from torchvision import transforms as transforms
-from src.logger_utils import logger
-
+import sys
+sys.path.append("..")
+from logger_utils import logger
 
 class MiniImageNet(data.Dataset):
     '''

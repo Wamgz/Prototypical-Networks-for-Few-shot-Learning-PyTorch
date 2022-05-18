@@ -10,6 +10,8 @@ from tqdm import tqdm
 import numpy as np
 import torch
 import os
+import sys
+sys.path.append("..")
 from logger_utils import logger
 
 options = get_parser().parse_args()

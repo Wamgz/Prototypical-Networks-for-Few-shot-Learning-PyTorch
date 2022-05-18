@@ -8,12 +8,10 @@ import torch.utils.data as data
 from torchvision import transforms as transforms
 import scipy.io
 import logging
-from src.logger_utils import logger
+import sys
+sys.path.append("..")
+from logger_utils import logger
 
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
-                    level=logging.INFO)
 class StanfordCars(data.Dataset):
     '''
     一共包含16185张不同型号的汽车图片，其中8144张为训练集，8041张为测试集
