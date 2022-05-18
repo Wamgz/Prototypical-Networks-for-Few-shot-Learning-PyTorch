@@ -14,6 +14,11 @@ def get_parser():
                         help='which dataset to use',
                         default='miniImagenet')
 
+    parser.add_argument('-model', '--model_name',
+                        type=str,
+                        help='which dataset to use',
+                        default='cnn')
+
     parser.add_argument('-height', '--height',
                         type=int,
                         help='image resized height',

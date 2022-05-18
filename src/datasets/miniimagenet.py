@@ -6,11 +6,8 @@ import glob
 import csv
 import torch.utils.data as data
 from torchvision import transforms as transforms
-import logging
+from src.logger_utils import logger
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
-                    level=logging.INFO)
 
 class MiniImageNet(data.Dataset):
     '''

@@ -10,13 +10,11 @@ from tqdm import tqdm
 import numpy as np
 import torch
 import os
-import logging
+from logger_utils import logger
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
-logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
-                    level=logging.INFO)
+
 
 def init_dataset(opt, mode):
     if opt.dataset_name == 'omniglotDataset':

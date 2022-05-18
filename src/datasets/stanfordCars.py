@@ -8,6 +8,8 @@ import torch.utils.data as data
 from torchvision import transforms as transforms
 import scipy.io
 import logging
+from src.logger_utils import logger
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',

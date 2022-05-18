@@ -3,6 +3,7 @@ import torch
 from torch.nn import functional as F
 from torch.nn.modules import Module
 from parser_util import get_parser
+from logger_utils import logger
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
