@@ -14,6 +14,8 @@ Inspired by https://github.com/pytorch/vision/pull/46
 
 IMG_CACHE = {}
 logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.INFO)
 
 class OmniglotDataset(data.Dataset):
     vinalys_baseurl = 'https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/vinyals/'
