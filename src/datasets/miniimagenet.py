@@ -1,4 +1,3 @@
-from __future__ import logger.info_function
 import numpy as np
 from PIL import Image
 import pickle as pkl
@@ -7,6 +6,9 @@ import glob
 import csv
 import torch.utils.data as data
 from torchvision import transforms as transforms
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MiniImageNet(data.Dataset):
     '''

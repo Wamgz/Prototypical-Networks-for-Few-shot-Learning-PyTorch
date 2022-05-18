@@ -1,5 +1,4 @@
 # coding=utf-8
-from __future__ import logger.info_function
 import torch.utils.data as data
 from PIL import Image
 import numpy as np
@@ -7,13 +6,14 @@ import shutil
 import errno
 import torch
 import os
+import logging
 
 '''
 Inspired by https://github.com/pytorch/vision/pull/46
 '''
 
 IMG_CACHE = {}
-
+logger = logging.getLogger(__name__)
 
 class OmniglotDataset(data.Dataset):
     vinalys_baseurl = 'https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/vinyals/'
