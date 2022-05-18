@@ -141,8 +141,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                                     n_support=opt.num_support_val)
                 val_loss.append(loss.detach())
                 val_acc.append(acc.detach())
-            avg_loss = torch.tensor(val_loss[-opt.iterations:])
-            avg_acc = torch.tensor(val_acc[-opt.iterations:])
+            avg_loss = torch.tensor(val_loss[-opt.iterations:]).mean()
+            avg_acc = torch.tensor(val_acc[-opt.iterations:]).mean()
             postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
                 best_acc)
             logger.info('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
