@@ -132,24 +132,25 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             continue
         val_iter = iter(val_dataloader)
         model.eval()
-        for batch in val_iter:
-            x, y = batch
-            x, y = x.to(device), y.to(device)
-            model_output = model(x)
-            loss, acc = loss_fn(model_output, target=y,
-                                n_support=opt.num_support_val)
-            val_loss.append(loss.cpu().item())
-            val_acc.append(acc.cpu().item())
-        avg_loss = np.mean(val_loss[-opt.iterations:])
-        avg_acc = np.mean(val_acc[-opt.iterations:])
-        postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
-            best_acc)
-        logger.info('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
-            avg_loss, avg_acc, postfix))
-        if avg_acc >= best_acc:
-            torch.save(model.state_dict(), best_model_path)
-            best_acc = avg_acc
-            best_state = model.state_dict()
+        with torch.no_grad():
+            for batch in val_iter:
+                x, y = batch
+                x, y = x.to(device), y.to(device)
+                model_output = model(x)
+                loss, acc = loss_fn(model_output, target=y,
+                                    n_support=opt.num_support_val)
+                val_loss.append(loss.cpu().item())
+                val_acc.append(acc.cpu().item())
+            avg_loss = np.mean(val_loss[-opt.iterations:])
+            avg_acc = np.mean(val_acc[-opt.iterations:])
+            postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
+                best_acc)
+            logger.info('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
+                avg_loss, avg_acc, postfix))
+            if avg_acc >= best_acc:
+                torch.save(model.state_dict(), best_model_path)
+                best_acc = avg_acc
+                best_state = model.state_dict()
 
     torch.save(model.state_dict(), last_model_path)
 
