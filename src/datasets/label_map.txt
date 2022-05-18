@@ -85,7 +85,7 @@
 84 Dodge_Caravan_Minivan_1997
 85 Dodge_Ram_Pickup_3500_Crew_Cab_2010
 86 Dodge_Ram_Pickup_3500_Quad_Cab_2009
-87 Dodge_Sprinter_Cargo_Van_2009
+87 Dodge_Slogger.infoer_Cargo_Van_2009
 88 Dodge_Journey_SUV_2012
 89 Dodge_Dakota_Crew_Cab_2010
 90 Dodge_Dakota_Club_Cab_2007
@@ -163,7 +163,7 @@
 162 Mercedes-Benz_SL-Class_Coupe_2009
 163 Mercedes-Benz_E-Class_Sedan_2012
 164 Mercedes-Benz_S-Class_Sedan_2012
-165 Mercedes-Benz_Sprinter_Van_2012
+165 Mercedes-Benz_Slogger.infoer_Van_2012
 166 Mitsubishi_Lancer_Sedan_2012
 167 Nissan_Leaf_Hatchback_2012
 168 Nissan_NV_Passenger_Van_2012

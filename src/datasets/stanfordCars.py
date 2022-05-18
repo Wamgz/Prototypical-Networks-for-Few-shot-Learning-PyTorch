@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import logger.info_function
 import numpy as np
 from PIL import Image
 import pickle as pkl

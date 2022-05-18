@@ -10,9 +10,11 @@ from tqdm import tqdm
 import numpy as np
 import torch
 import os
+import logging
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
+logger = logging.getLogger(__name__)
 
 def init_dataset(opt, mode):
     if opt.dataset_name == 'omniglotDataset':
@@ -108,7 +110,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     last_model_path = os.path.join(opt.experiment_root, 'last_model.pth')
 
     for epoch in range(opt.epochs):
-        print('=== Epoch: {} ==='.format(epoch))
+        logger.info('=== Epoch: {} ==='.format(epoch))
         tr_iter = iter(tr_dataloader)
         model.train()
         for batch in tqdm(tr_iter):
@@ -122,9 +124,9 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             optim.step()
             train_loss.append(loss.cpu().item())
             train_acc.append(acc.cpu().item())
-        avg_loss = torch.mean(train_loss[-opt.iterations:])
-        avg_acc = torch.mean(train_acc[-opt.iterations:])
-        print('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
+        avg_loss = np.mean(train_loss[-opt.iterations:])
+        avg_acc = np.mean(train_acc[-opt.iterations:])
+        logger.info('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
         lr_scheduler.step()
         if val_dataloader is None:
             continue
@@ -142,7 +144,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         avg_acc = np.mean(val_acc[-opt.iterations:])
         postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
             best_acc)
-        print('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
+        logger.info('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
             avg_loss, avg_acc, postfix))
         if avg_acc >= best_acc:
             torch.save(model.state_dict(), best_model_path)
@@ -173,7 +175,7 @@ def test(opt, test_dataloader, model):
                              n_support=opt.num_support_val)
             avg_acc.append(acc.cpu().item())
     avg_acc = np.mean(avg_acc)
-    print('Test Acc: {}'.format(avg_acc))
+    logger.info('Test Acc: {}'.format(avg_acc))
 
     return avg_acc
 
@@ -223,13 +225,13 @@ def main():
                 optim=optim,
                 lr_scheduler=lr_scheduler)
     best_state, best_acc, train_loss, train_acc, val_loss, val_acc = res
-    print('Testing with last model..')
+    logger.info('Testing with last model..')
     test(opt=options,
          test_dataloader=test_dataloader,
          model=model)
 
     model.load_state_dict(best_state)
-    print('Testing with best model..')
+    logger.info('Testing with best model..')
     test(opt=options,
          test_dataloader=test_dataloader,
          model=model)

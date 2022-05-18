@@ -1,5 +1,5 @@
 # coding=utf-8
-from __future__ import print_function
+from __future__ import logger.info_function
 import torch.utils.data as data
 from PIL import Image
 import numpy as np
@@ -107,7 +107,7 @@ class OmniglotDataset(data.Dataset):
                 raise
 
         for k, url in self.vinyals_split_sizes.items():
-            print('== Downloading ' + url)
+            logger.info('== Downloading ' + url)
             data = urllib.request.urlopen(url)
             filename = url.rpartition(os.sep)[-1]
             file_path = os.path.join(self.root, self.splits_folder, filename)
@@ -115,14 +115,14 @@ class OmniglotDataset(data.Dataset):
                 f.write(data.read())
 
         for url in self.urls:
-            print('== Downloading ' + url)
+            logger.info('== Downloading ' + url)
             data = urllib.request.urlopen(url)
             filename = url.rpartition(os.sep)[2]
             file_path = os.path.join(self.root, self.raw_folder, filename)
             with open(file_path, 'wb') as f:
                 f.write(data.read())
             orig_root = os.path.join(self.root, self.raw_folder)
-            print("== Unzip from " + file_path + " to " + orig_root)
+            logger.info("== Unzip from " + file_path + " to " + orig_root)
             zip_ref = zipfile.ZipFile(file_path, 'r')
             zip_ref.extractall(orig_root)
             zip_ref.close()
@@ -131,7 +131,7 @@ class OmniglotDataset(data.Dataset):
             for f in os.listdir(os.path.join(orig_root, p)):
                 shutil.move(os.path.join(orig_root, p, f), file_processed)
             os.rmdir(os.path.join(orig_root, p))
-        print("Download finished.")
+        logger.info("Download finished.")
 
 
 def find_items(root_dir, classes):
@@ -145,7 +145,7 @@ def find_items(root_dir, classes):
             for rot in rots:
                 if label + rot in classes and (f.endswith("png")):
                     retour.extend([(f, label, root, rot)])
-    print("== Dataset: Found %d items " % len(retour))
+    logger.info("== Dataset: Found %d items " % len(retour))
     return retour
 
 
@@ -154,7 +154,7 @@ def index_classes(items):
     for i in items: #i: ('0459_14.png', 'Gujarati/character42', '../data/data/Gujarati/character42', '/rot000')
         if (not i[1] + i[-1] in idx):
             idx[i[1] + i[-1]] = len(idx)
-    print("== Dataset: Found %d classes" % len(idx))
+    logger.info("== Dataset: Found %d classes" % len(idx))
     return idx
 
 

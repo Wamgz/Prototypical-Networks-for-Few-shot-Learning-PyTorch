@@ -74,10 +74,10 @@ if __name__ == '__main__':
         emb_dropout=0.1
     )
     for epoch in range(opt.epochs):
-        print('=== Epoch: {} ==='.format(epoch))
+        logger.info('=== Epoch: {} ==='.format(epoch))
         tr_iter = iter(tr_dataloader)
         for batch in tqdm(tr_iter):
             x, y = batch # x: (600, 1, 256, 256), y:(600, )
             x, y = x[:5, :, :, :], y[:5]
             out = model(x)
-            print(out.shape)
+            logger.info(out.shape)

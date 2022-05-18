@@ -17,4 +17,4 @@ if __name__ == '__main__':
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=10)
     for i, data in enumerate(dataloader):
         x, y = data
-        print(x.shape, y.shape)
+        logger.info(x.shape, y.shape)

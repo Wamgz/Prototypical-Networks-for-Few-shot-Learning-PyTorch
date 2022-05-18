@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import logger.info_function
 import numpy as np
 from PIL import Image
 import pickle as pkl
@@ -34,7 +34,7 @@ class MiniImageNet(data.Dataset):
 
         #1、读取pkl文件
         pkl_name = '{}/miniImagenet/data/mini-imagenet-cache-{}.pkl'.format(self.root, self.split)
-        print('Loading pkl data: {} '.format(pkl_name))
+        logger.info('Loading pkl data: {} '.format(pkl_name))
 
         try:
             with open(pkl_name, "rb") as f:
@@ -65,7 +65,7 @@ class MiniImageNet(data.Dataset):
         """
 
         pkl_name = '{}/miniImagenet/data/mini-imagenet-cache-{}.pkl'.format(self.root, self.split)
-        print('Loading pkl data: {} '.format(pkl_name))
+        logger.info('Loading pkl data: {} '.format(pkl_name))
 
         try:
             with open(pkl_name, "rb") as f:
@@ -83,11 +83,11 @@ class MiniImageNet(data.Dataset):
             np.random.RandomState(self.seed).shuffle(idxs)  # fix the seed to keep label,unlabel fixed
             self.x[i] = image_data[idxs]
 
-        print(data.keys(), image_data.shape, class_dict.keys())
+        logger.info(data.keys(), image_data.shape, class_dict.keys())
         data_classes = sorted(class_dict.keys())  # sorted to keep the order
 
         n_classes = len(data_classes) # 64
-        print('n_classes:{}, n_label:{}'.format(n_classes, self.n_label))
+        logger.info('n_classes:{}, n_label:{}'.format(n_classes, self.n_label))
         dataset_l = np.zeros([n_classes, self.n_label, self.im_height, self.im_width, self.channels], dtype=np.float32) #(64, 600, 84, 84, 3) n_label是每个class下的sample个数
         if self.n_unlabel > 0:
             dataset_u = np.zeros([n_classes, self.n_unlabel, self.im_height, self.im_width, self.channels],
@@ -101,8 +101,8 @@ class MiniImageNet(data.Dataset):
             dataset_l[i] = image_data[idxs[0:self.n_label]]
             if self.n_unlabel > 0:
                 dataset_u[i] = image_data[idxs[self.n_label:]]
-        print('labeled data:', np.shape(dataset_l))
-        print('unlabeled data:', np.shape(dataset_u))
+        logger.info('labeled data:', np.shape(dataset_l))
+        logger.info('unlabeled data:', np.shape(dataset_u))
 
         self.x = dataset_l
         self.dataset_u = dataset_u
