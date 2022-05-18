@@ -2,7 +2,7 @@
 import torch
 from torch.nn import functional as F
 from torch.nn.modules import Module
-
+from train import device
 
 class PrototypicalLoss(Module):
     '''
@@ -76,7 +76,7 @@ def prototypical_loss(input, target, n_support):
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
 
-    target_inds = torch.arange(0, n_classes)
+    target_inds = torch.arange(0, n_classes).to(device)
     target_inds = target_inds.view(n_classes, 1, 1)
     target_inds = target_inds.expand(n_classes, n_query, 1).long()
 
