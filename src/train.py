@@ -5,6 +5,7 @@ from src.datasets.omniglot_dataset import OmniglotDataset
 from protonet import ProtoNet
 from parser_util import get_parser
 from src.datasets.miniimagenet import MiniImageNet
+from src.datasets.stanfordCars import StanfordCars
 from tqdm import tqdm
 import numpy as np
 import torch
@@ -20,6 +21,10 @@ def init_dataset(opt, mode):
         return dataset
     elif opt.dataset_name == 'miniImagenet':
         dataset = MiniImageNet(mode=mode, opt=options)
+        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), opt=opt)
+        return dataset
+    elif opt.dataset_name == 'stanfordCars':
+        dataset = StanfordCars(mode=mode, opt=options)
         _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), opt=opt)
         return dataset
 
@@ -115,8 +120,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                                 n_support=opt.num_support_tr)
             loss.backward()
             optim.step()
-            train_loss.append(loss.item().cpu())
-            train_acc.append(acc.item().cpu())
+            train_loss.append(loss.cpu().item())
+            train_acc.append(acc.cpu().item())
         avg_loss = torch.mean(train_loss[-opt.iterations:])
         avg_acc = torch.mean(train_acc[-opt.iterations:])
         print('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
@@ -131,8 +136,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             model_output = model(x)
             loss, acc = loss_fn(model_output, target=y,
                                 n_support=opt.num_support_val)
-            val_loss.append(loss.item().cpu())
-            val_acc.append(acc.item().cpu())
+            val_loss.append(loss.cpu().item())
+            val_acc.append(acc.cpu().item())
         avg_loss = np.mean(val_loss[-opt.iterations:])
         avg_acc = np.mean(val_acc[-opt.iterations:])
         postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
@@ -166,7 +171,7 @@ def test(opt, test_dataloader, model):
             model_output = model(x)
             _, acc = loss_fn(model_output, target=y,
                              n_support=opt.num_support_val)
-            avg_acc.append(acc.item().cpu())
+            avg_acc.append(acc.cpu().item())
     avg_acc = np.mean(avg_acc)
     print('Test Acc: {}'.format(avg_acc))
 
@@ -209,7 +214,6 @@ def main():
 
     model = init_protonet(options)
 
-    print(get_parameter_number(model))
     optim = init_optim(options, model)
     lr_scheduler = init_lr_scheduler(options, optim)
     res = train(opt=options,

@@ -8,21 +8,21 @@ def get_parser():
     parser.add_argument('-root', '--dataset_root',
                         type=str,
                         help='path to data',
-                        default='../data')
+                        default='/Users/wangzi/PycharmProjects/few-shot-learning/Prototypical-Networks-for-Few-shot-Learning-PyTorch/data')
     parser.add_argument('-dname', '--dataset_name',
                         type=str,
                         help='which dataset to use',
-                        default='miniImagenet')
+                        default='stanfordCars')
 
     parser.add_argument('-height', '--height',
                         type=int,
                         help='image resized height',
-                        default=0)
+                        default=128)
 
     parser.add_argument('-width', '--width',
                         type=int,
                         help='image resized width',
-                        default=0)
+                        default=128)
 
     parser.add_argument('-channel', '--channel',
                         type=int,
