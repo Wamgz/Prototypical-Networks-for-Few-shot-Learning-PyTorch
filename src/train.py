@@ -1,11 +1,11 @@
 # coding=utf-8
 from prototypical_batch_sampler import PrototypicalBatchSampler
 from prototypical_loss import prototypical_loss as loss_fn
-from src.datasets.omniglot_dataset import OmniglotDataset
+from datasets.omniglot_dataset import OmniglotDataset
 from protonet import ProtoNet
 from parser_util import get_parser
-from src.datasets.miniimagenet import MiniImageNet
-from src.datasets.stanfordCars import StanfordCars
+from datasets.miniimagenet import MiniImageNet
+from datasets.stanfordCars import StanfordCars
 from tqdm import tqdm
 import numpy as np
 import torch

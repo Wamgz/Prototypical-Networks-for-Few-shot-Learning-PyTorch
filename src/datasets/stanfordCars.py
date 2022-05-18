@@ -8,7 +8,6 @@ import csv
 import torch.utils.data as data
 from torchvision import transforms as transforms
 import scipy.io
-from src.parser_util import get_parser
 
 
 class StanfordCars(data.Dataset):
@@ -57,8 +56,3 @@ class StanfordCars(data.Dataset):
 
     def __len__(self):
         return len(self.x)
-
-if __name__ == '__main__':
-    options = get_parser().parse_args()
-    dataset = StanfordCars('train', options)
-
