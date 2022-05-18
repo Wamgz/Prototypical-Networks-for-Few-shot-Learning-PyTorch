@@ -120,12 +120,12 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             model_output = model(x) # (batch, z_dim(protonet的超参数决定))
             loss, acc = loss_fn(model_output, target=y,
                                 n_support=opt.num_support_tr)
-            loss.backward()
+            loss.backward() # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()
             train_loss.append(loss.detach())
             train_acc.append(acc.detach())
-        avg_loss = torch.cat(train_loss[-opt.iterations:]).mean()
-        avg_acc = torch.cat(train_acc[-opt.iterations:]).mean()
+        avg_loss = torch.tensor(train_loss[-opt.iterations:]).mean()
+        avg_acc = torch.tensor(train_acc[-opt.iterations:]).mean()
         logger.info('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
         lr_scheduler.step()
         if val_dataloader is None:
@@ -139,10 +139,10 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                 model_output = model(x)
                 loss, acc = loss_fn(model_output, target=y,
                                     n_support=opt.num_support_val)
-                val_loss.append(loss.cpu().item())
-                val_acc.append(acc.cpu().item())
-            avg_loss = np.mean(val_loss[-opt.iterations:])
-            avg_acc = np.mean(val_acc[-opt.iterations:])
+                val_loss.append(loss.detach())
+                val_acc.append(acc.detach())
+            avg_loss = torch.tensor(val_loss[-opt.iterations:])
+            avg_acc = torch.tensor(val_acc[-opt.iterations:])
             postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
                 best_acc)
             logger.info('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
