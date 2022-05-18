@@ -2,8 +2,10 @@
 import torch
 from torch.nn import functional as F
 from torch.nn.modules import Module
-from train import device
+from parser_util import get_parser
 
+options = get_parser().parse_args()
+device = torch.device(options.cuda)
 class PrototypicalLoss(Module):
     '''
     Loss class deriving from Module for the prototypical loss function defined below
