@@ -108,3 +108,5 @@ ENV/
 data/
 
 .DS_Store
+
+./output
