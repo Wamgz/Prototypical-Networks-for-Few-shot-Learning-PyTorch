@@ -32,4 +32,4 @@ class Logger(object):
 
 
 options = get_parser().parse_args()
-logger = Logger(options.model_name + '-' + options.dataset_name, level='info')
+logger = Logger(options.model_name + '-' + options.dataset_name + '.log', level='info')
