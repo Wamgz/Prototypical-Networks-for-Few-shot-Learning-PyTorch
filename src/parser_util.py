@@ -12,12 +12,12 @@ def get_parser():
     parser.add_argument('-dname', '--dataset_name',
                         type=str,
                         help='which dataset to use',
-                        default='miniImagenet')
+                        default='stanfordCars')
 
     parser.add_argument('-model', '--model_name',
                         type=str,
                         help='which dataset to use',
-                        default='vit')
+                        default='cnn')
 
     parser.add_argument('-height', '--height',
                         type=int,
