@@ -199,8 +199,8 @@ def test(opt, test_dataloader, model):
             model_output = model(x)
             _, acc = loss_fn(model_output, target=y,
                              n_support=opt.num_support_val)
-            avg_acc.append(acc.cpu().item())
-    avg_acc = np.mean(avg_acc)
+            avg_acc.append(acc.detach())
+    avg_acc = torch.tensor(avg_acc).mean()
     logger.info('Test Acc: {}'.format(avg_acc))
 
     return avg_acc
