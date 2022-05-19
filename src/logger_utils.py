@@ -1,6 +1,8 @@
 import logging
+import os.path
 from logging import handlers
 from parser_util import get_parser
+import time
 
 class Logger(object):
     level_relations = {
@@ -29,7 +31,16 @@ class Logger(object):
         th.setFormatter(format_str)#设置文件里写入的格式
         self.logger.addHandler(sh) #把对象加到logger里
         self.logger.addHandler(th)
+    def info(self, msg):
+        self.logger.info(msg)
 
-
+now = time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
 options = get_parser().parse_args()
-logger = Logger(options.model_name + '-' + options.dataset_name + '.log', level='info')
+log_dir = os.path.join('../', 'log')
+if not os.path.exists(log_dir):
+    os.mkdir(log_dir)
+
+logger = Logger(os.path.join(log_dir, options.model_name + '-' + options.dataset_name + '-' + now + '.log'), level='info')
+
+if __name__ == '__main__':
+    logger.info('hello 111')
