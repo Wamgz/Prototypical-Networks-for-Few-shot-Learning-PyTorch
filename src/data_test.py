@@ -65,7 +65,7 @@ if __name__ == '__main__':
     model = ViT(
         image_size=256,
         patch_size=32,
-        num_classes=160,
+        out_dim=160,
         dim=1024,
         depth=1,
         heads=16,

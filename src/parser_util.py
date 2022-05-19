@@ -17,7 +17,7 @@ def get_parser():
     parser.add_argument('-model', '--model_name',
                         type=str,
                         help='which dataset to use',
-                        default='cnn')
+                        default='vit')
 
     parser.add_argument('-height', '--height',
                         type=int,
@@ -67,17 +67,17 @@ def get_parser():
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,
                         help='number of random classes per episode for training, default=60',
-                        default=16)
+                        default=20)
 
     parser.add_argument('-nsTr', '--num_support_tr',
                         type=int,
                         help='number of samples per class to use as support for training, default=5',
-                        default=10)
+                        default=5)
 
     parser.add_argument('-nqTr', '--num_query_tr',
                         type=int,
                         help='number of samples per class to use as query for training, default=5',
-                        default=10)
+                        default=15)
 
     parser.add_argument('-cVa', '--classes_per_it_val',
                         type=int,
@@ -87,12 +87,12 @@ def get_parser():
     parser.add_argument('-nsVa', '--num_support_val',
                         type=int,
                         help='number of samples per class to use as support for validation, default=5',
-                        default=10)
+                        default=5)
 
     parser.add_argument('-nqVa', '--num_query_val',
                         type=int,
                         help='number of samples per class to use as query for validation, default=15',
-                        default=10)
+                        default=15)
 
     parser.add_argument('-seed', '--manual_seed',
                         type=int,

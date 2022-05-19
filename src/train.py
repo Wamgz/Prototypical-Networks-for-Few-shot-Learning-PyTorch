@@ -12,6 +12,7 @@ import torch
 import os
 import sys
 from logger_utils import logger
+from Vit import ViT
 
 if os.curdir not in sys.path:
     sys.path.append(os.curdir)
@@ -19,30 +20,34 @@ if os.curdir not in sys.path:
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
 
+
 def init_dataset(opt, mode):
     if opt.dataset_name == 'omniglotDataset':
         dataset = OmniglotDataset(mode=mode, root=opt.dataset_root)
-        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), opt=opt)
+        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), mode=mode, opt=opt)
         return dataset
     elif opt.dataset_name == 'miniImagenet':
         dataset = MiniImageNet(mode=mode, opt=options)
-        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), opt=opt)
+        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), mode=mode, opt=opt)
         return dataset
     elif opt.dataset_name == 'stanfordCars':
         dataset = StanfordCars(mode=mode, opt=options)
-        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), opt=opt)
+        _dataset_exception_handle(dataset=dataset, n_classes=len(np.unique(dataset.y)), mode=mode, opt=opt)
         return dataset
 
     raise ValueError('Unsupported dataset_name {}'.format(opt.dataset_name))
 
-#region ##数据加载失败抛异常处理##
-def _dataset_exception_handle(dataset, n_classes, opt):
+
+# region ##数据加载失败抛异常处理##
+def _dataset_exception_handle(dataset, n_classes, mode, opt):
     n_classes = len(np.unique(dataset.y))
-    if n_classes < opt.classes_per_it_tr or n_classes < opt.classes_per_it_val:
+    if mode == 'train' and n_classes < opt.classes_per_it_tr or mode == 'val' and n_classes < opt.classes_per_it_val:
         raise (Exception('There are not enough classes in the data in order ' +
                          'to satisfy the chosen classes_per_it. Decrease the ' +
                          'classes_per_it_{tr/val} option and try again.'))
-#endregion
+
+
+# endregion
 
 def init_sampler(opt, labels, mode, dataset_name='miniImagenet'):
     if 'train' in mode:
@@ -65,12 +70,28 @@ def init_dataloader(opt, mode):
     return dataloader
 
 
-def init_protonet(opt):
+def init_model(opt):
     '''
     Initialize the ProtoNet
     '''
-    model = ProtoNet(x_dim=opt.channel).to(device)
-    return model
+    if opt.model_name == 'cnn':
+        return ProtoNet(x_dim=opt.channel).to(device)
+    elif opt.model_name == 'vit':
+        return ViT(
+            image_size=128,
+            patch_size=32,
+            out_dim=1600,
+            dim=256,
+            depth=2,
+            heads=8,
+            dim_head=64,
+            mlp_dim=512,
+            dropout=0.1,
+            emb_dropout=0.1,
+            channels=3
+        )
+
+    raise ValueError('Unsupported model_name {}'.format(opt.model_name))
 
 
 def init_optim(opt, model):
@@ -109,8 +130,9 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     val_acc = []
     best_acc = 0
 
-    best_model_path = os.path.join(opt.experiment_root, 'best_model.pth')
-    last_model_path = os.path.join(opt.experiment_root, 'last_model.pth')
+
+    best_model_path = os.path.join(opt.experiment_root, opt.dataset_name + '_' + opt.model_name + '_' + 'best_model.pth')
+    last_model_path = os.path.join(opt.experiment_root, opt.dataset_name + '_' + opt.model_name + '_' + 'last_model.pth')
 
     for epoch in range(opt.epochs):
         logger.info('=== Epoch: {} ==='.format(epoch))
@@ -118,12 +140,12 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         model.train()
         for batch in tqdm(tr_iter):
             optim.zero_grad()
-            x, y = batch # x: (batch, C, H, W), y:(batch, )
+            x, y = batch  # x: (batch, C, H, W), y:(batch, )
             x, y = x.to(device), y.to(device)
-            model_output = model(x) # (batch, z_dim(protonet的超参数决定))
+            model_output = model(x)  # (batch, z_dim(protonet的超参数决定))
             loss, acc = loss_fn(model_output, target=y,
                                 n_support=opt.num_support_tr)
-            loss.backward() # tensor(254.0303, grad_fn=<NegBackward0>)
+            loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()
             train_loss.append(loss.detach())
             train_acc.append(acc.detach())
@@ -190,7 +212,7 @@ def eval(opt):
     '''
 
     test_dataloader = init_dataset(options)[-1]
-    model = init_protonet(options)
+    model = init_model(options)
     model_path = os.path.join(opt.experiment_root, 'best_model.pth')
     model.load_state_dict(torch.load(model_path))
 
@@ -198,10 +220,12 @@ def eval(opt):
          test_dataloader=test_dataloader,
          model=model)
 
+
 def get_parameter_number(model):
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return {'Total': total_num, 'Trainable': trainable_num}
+
 
 def main():
     '''
@@ -218,7 +242,7 @@ def main():
     # trainval_dataloader = init_dataloader(options, 'trainval')
     test_dataloader = init_dataloader(options, 'test')
 
-    model = init_protonet(options)
+    model = init_model(options)
 
     optim = init_optim(options, model)
     lr_scheduler = init_lr_scheduler(options, optim)

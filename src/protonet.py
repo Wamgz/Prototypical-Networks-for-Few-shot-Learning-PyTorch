@@ -30,3 +30,17 @@ class ProtoNet(nn.Module):
     def forward(self, x):
         x = self.encoder(x)
         return x.view(x.size(0), -1)
+
+def get_parameter_number(model):
+    total_num = sum(p.numel() for p in model.parameters())
+    trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return {'Total': total_num, 'Trainable': trainable_num}
+
+if __name__ == '__main__':
+    v = ProtoNet(x_dim=3)
+    print(get_parameter_number(v))
+    import torch
+    x = torch.randn((1, 3, 84, 84))
+    print(x.shape)
+    out = v(x)
+    print(out.shape)
