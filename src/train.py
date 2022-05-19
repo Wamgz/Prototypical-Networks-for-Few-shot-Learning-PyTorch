@@ -89,7 +89,7 @@ def init_model(opt):
             dropout=0.1,
             emb_dropout=0.1,
             channels=3
-        )
+        ).to(device)
 
     raise ValueError('Unsupported model_name {}'.format(opt.model_name))
 
