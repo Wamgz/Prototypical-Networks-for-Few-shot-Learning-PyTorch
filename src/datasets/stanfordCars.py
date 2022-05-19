@@ -9,8 +9,7 @@ from torchvision import transforms as transforms
 import scipy.io
 import logging
 import sys
-sys.path.append("..")
-from src.logger_utils import logger
+from logger_utils import logger
 
 class StanfordCars(data.Dataset):
     '''

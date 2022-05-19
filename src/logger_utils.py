@@ -13,7 +13,7 @@ class Logger(object):
         'crit':logging.CRITICAL
     }#日志级别关系映射
 
-    def __init__(self,filename,level='info',when='D',backCount=3,fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
+    def __init__(self,filename,level='info',when='D',backCount=3,fmt='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
         self.logger = logging.getLogger(filename)
         format_str = logging.Formatter(fmt)#设置日志格式
         self.logger.setLevel(self.level_relations.get(level))#设置日志级别
@@ -40,7 +40,5 @@ log_dir = os.path.join('../', 'log')
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 
-logger = Logger(os.path.join(log_dir, options.model_name + '-' + options.dataset_name + '-' + now + '.log'), level='info')
-
-if __name__ == '__main__':
-    logger.info('hello 111')
+logger = Logger(os.path.join(log_dir, options.model_name + '-' + options.dataset_name + '-' + now + '.log'),
+                level='info')

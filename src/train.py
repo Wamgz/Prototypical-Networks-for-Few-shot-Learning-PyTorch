@@ -11,12 +11,13 @@ import numpy as np
 import torch
 import os
 import sys
-sys.path.append("..")
 from logger_utils import logger
+
+if os.curdir not in sys.path:
+    sys.path.append(os.curdir)
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
-
 
 def init_dataset(opt, mode):
     if opt.dataset_name == 'omniglotDataset':
