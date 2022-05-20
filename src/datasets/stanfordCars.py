@@ -46,7 +46,7 @@ class StanfordCars(data.Dataset):
                 image2label[img_path] = int(split[1]) - 1
             mode2image['val'] = mode2image['test']
         self.x = [Image.open(path) for path in mode2image[mode]]
-        self.y = [image2label[path] for path in self.x]
+        self.y = [image2label[path] for path in mode2image[mode]]
     def __getitem__(self, idx):
         x = self.x[idx]
         if len(x.split()) < 3:
