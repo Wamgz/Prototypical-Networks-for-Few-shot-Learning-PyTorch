@@ -1,5 +1,6 @@
 python train.py \
 --dataset_root ~/WZ/data \
+--epochs 10000 \
 --model_name vit \
 --dataset_name miniImagenet \
 --classes_per_it_tr 20 \
