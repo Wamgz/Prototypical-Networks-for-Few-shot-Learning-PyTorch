@@ -35,6 +35,7 @@ class StanfordCars(data.Dataset):
         data_dir = os.path.join(dir, 'data')
         mode2image = {'train': [], 'val': [], 'test': []} ## TODO 如何划分
         image2label = {}
+        logger.info('Loading data_dir data: {}, mode: {} '.format(data_dir, mode))
         with open(os.path.join(dir, 'mat2txt.txt'), 'r') as f:
             lines = f.readlines()
             for line in lines:
