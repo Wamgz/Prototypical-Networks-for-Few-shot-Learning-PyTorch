@@ -97,7 +97,7 @@ def init_model(opt):
             patch_size=32,
             out_dim=1600,
             dim=256,
-            depth=3,
+            depth=4,
             heads=8,
             dim_head=64,
             mlp_dim=512,
