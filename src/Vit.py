@@ -120,6 +120,10 @@ class ViT(nn.Module):
             nn.Linear(dim, out_dim)
         )
 
+        self.out_head = nn.Sequential(
+            nn.LayerNorm((self.num_patches + 1) * dim),
+            nn.Linear((self.num_patches + 1) * dim, out_dim)
+        )
     def forward(self, img):
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
@@ -131,11 +135,12 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
-
-        x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] # 一张图片的所有patch取了平均值 (batch, patch_size * patch_size)
-
-        x = self.to_latent(x) # (batch, patch_size * patch_size)
-        return self.mlp_head(x) # (batch, num_classes)
+        x = x.view(b, -1)
+        return self.out_head(x)
+        # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] # 一张图片的所有patch取了平均值 (batch, patch_size * patch_size)
+        #
+        # x = self.to_latent(x) # (batch, patch_size * patch_size)
+        # return self.mlp_head(x) # (batch, num_classes)
 
 def get_parameter_number(model):
     total_num = sum(p.numel() for p in model.parameters())
