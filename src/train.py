@@ -13,6 +13,7 @@ import os
 import sys
 from logger_utils import logger
 from Vit import ViT
+from vit_for_small_dataset import ViT_small
 
 if os.curdir not in sys.path:
     sys.path.append(os.curdir)
@@ -78,6 +79,20 @@ def init_model(opt):
         return ProtoNet(x_dim=opt.channel).to(device)
     elif opt.model_name == 'vit':
         return ViT(
+            image_size=128,
+            patch_size=32,
+            out_dim=1600,
+            dim=256,
+            depth=4,
+            heads=8,
+            dim_head=64,
+            mlp_dim=512,
+            dropout=0.1,
+            emb_dropout=0.1,
+            channels=3
+        ).to(device)
+    elif opt.model_name == 'vit_small':
+        return ViT_small(
             image_size=128,
             patch_size=32,
             out_dim=1600,
