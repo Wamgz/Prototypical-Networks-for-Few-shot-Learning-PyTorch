@@ -45,10 +45,11 @@ class StanfordCars(data.Dataset):
                 mode2image[cur_mode].append(img_path)
                 image2label[img_path] = int(split[1]) - 1
             mode2image['val'] = mode2image['test']
-        self.x = [Image.open(path) for path in mode2image[mode]]
+        self.x = mode2image[mode]
         self.y = [image2label[path] for path in mode2image[mode]]
     def __getitem__(self, idx):
         x = self.x[idx]
+        x = Image.open(x)
         if len(x.split()) < 3:
             x = x.convert('RGB')
         if self.transform:
