@@ -144,7 +144,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             x, y = x.to(device), y.to(device)
             model_output = model(x)  # (batch, z_dim(protonet的超参数决定))
             loss, acc = loss_fn(model_output, target=y,
-                                n_support=opt.num_support_tr)
+                                n_support=opt.num_support_tr,
+                                n_query=opt.num_query_tr)
             loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()
             train_loss.append(loss.detach())
@@ -163,7 +164,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                 x, y = x.to(device), y.to(device)
                 model_output = model(x)
                 loss, acc = loss_fn(model_output, target=y,
-                                    n_support=opt.num_support_val)
+                                    n_support=opt.num_support_val,
+                                    n_query=opt.num_query_val)
                 val_loss.append(loss.detach())
                 val_acc.append(acc.detach())
             avg_loss = torch.tensor(val_loss[-opt.iterations:]).mean()
@@ -198,7 +200,8 @@ def test(opt, test_dataloader, model):
             x, y = x.to(device), y.to(device)
             model_output = model(x)
             _, acc = loss_fn(model_output, target=y,
-                             n_support=opt.num_support_val)
+                             n_support=opt.num_support_val,
+                             n_query=opt.num_query_val)
             avg_acc.append(acc.detach())
     avg_acc = torch.tensor(avg_acc).mean()
     logger.info('Test Acc: {}'.format(avg_acc))

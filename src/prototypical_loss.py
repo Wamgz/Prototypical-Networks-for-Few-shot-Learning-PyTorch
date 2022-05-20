@@ -41,7 +41,7 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-def prototypical_loss(input, target, n_support):
+def prototypical_loss(input, target, n_support, n_query):
     '''
     Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
 
@@ -67,8 +67,7 @@ def prototypical_loss(input, target, n_support):
     # FIXME when torch will support where as np
     # 上面的dataset实际上模拟了一个episode(从整个train set取出的一个subset)，下面的support set和query set就是在这个episode中随机取一部分，loss计算也是计算query
     # 和support set的平均值作为prototype
-    # assuming n_query, n_target constants
-    n_query = target.eq(classes[0].item()).sum().item() - n_support
+
     # support的每个类取前n_support个, [tensor[0, 1, 2, 3, 4], tensor(5, 6, 10, 11, 12), ····]
     support_idxs = list(map(supp_idxs, classes)) #list: (opt.classes_per_it_tr, opt.num_support_tr), format: [tensor([ 67, 142, 257, 303, 420]), tensor([  7, 193, 307, 325, 350]), ····]
 
