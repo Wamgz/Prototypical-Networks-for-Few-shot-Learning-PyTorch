@@ -49,6 +49,10 @@ def get_parser():
                         help='learning rate for the model, default=0.001',
                         default=0.001)
 
+    parser.add_argument('-wd', '--weight_decay',
+                        type=float,
+                        help='l2 regulazation rate',
+                        default=0.0)
     parser.add_argument('-lrS', '--lr_scheduler_step',
                         type=int,
                         help='StepLR learning rate scheduler step, default=20',

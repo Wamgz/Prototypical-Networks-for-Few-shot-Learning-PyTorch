@@ -114,7 +114,8 @@ def init_optim(opt, model):
     Initialize optimizer
     '''
     return torch.optim.Adam(params=model.parameters(),
-                            lr=opt.learning_rate)
+                            lr=opt.learning_rate,
+                            weight_decay=opt.weight_decay)
 
 
 def init_lr_scheduler(opt, optim):
