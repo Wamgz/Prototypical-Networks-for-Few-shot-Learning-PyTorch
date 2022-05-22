@@ -159,7 +159,7 @@ if __name__ == '__main__':
         mlp_dim=512,
         dropout=0.1,
         emb_dropout=0.1,
-        channels=3
+        channels=3,
     )
     img = torch.randn(2, 3, 128, 128)
     out = v(img)
