@@ -94,7 +94,7 @@ class ViT(nn.Module):
                  dim_head=64, dropout=0., emb_dropout=0., feature_only=False, pretrained=False):
         super().__init__()
         self.feature_only = feature_only
-        self.pretrained_model = pretrained
+        self.pretrained = pretrained
 
         image_height, image_width = pair(image_size) # 256, 256
         patch_height, patch_width = pair(patch_size) # 32, 32
@@ -129,7 +129,11 @@ class ViT(nn.Module):
             nn.Linear((self.num_patches + 1) * dim, out_dim)
         )
         if feature_only and pretrained:
-            self.pretrained_model = timm.create_model('vit_base_patch16_224', num_classes=1600, pretrained=True)
+            self.pretrained_model = timm.create_model('vit_base_patch16_224', num_classes=out_dim, pretrained=True)
+            for param in self.pretrained_model.parameters():
+                param.requires_grad = False
+            for param in self.pretrained_model.head.parameters():
+                param.requires_grad = True
 
     def forward(self, img):
         if self.feature_only and self.pretrained:
@@ -154,6 +158,10 @@ class ViT(nn.Module):
 def get_parameter_number(model):
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    M = 1024 * 1024
+    size = total_num / 4. / M
+    print('参数量: %d\n模型大小: %.4fM' % (total_num, size))
     return {'Total': total_num, 'Trainable': trainable_num}
 
 if __name__ == '__main__':
@@ -162,7 +170,7 @@ if __name__ == '__main__':
         patch_size=32,
         out_dim=1600,
         dim=256,
-        depth=2,
+        depth=4,
         heads=8,
         dim_head=64,
         mlp_dim=512,
@@ -171,6 +179,3 @@ if __name__ == '__main__':
         channels=3,
     )
     num_param = get_parameter_number(model)
-    M = 1024 * 1024
-    size = num_param['Total'] / 4. / M
-    print('%.3fM' % size)

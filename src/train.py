@@ -89,7 +89,9 @@ def init_model(opt):
             mlp_dim=512,
             dropout=0.1,
             emb_dropout=0.1,
-            channels=3
+            channels=3,
+            feature_only=True,
+            pretrained=True
         ).to(device)
     elif opt.model_name == 'vit_small':
         return ViT_small(
@@ -113,7 +115,7 @@ def init_optim(opt, model):
     '''
     Initialize optimizer
     '''
-    return torch.optim.Adam(params=model.parameters(),
+    return torch.optim.Adam(params=model.pretrained_model.head.parameters(),
                             lr=opt.learning_rate,
                             weight_decay=opt.weight_decay)
 
@@ -158,7 +160,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             optim.zero_grad()
             x, y = batch  # x: (batch, C, H, W), y:(batch, )
             x, y = x.to(device), y.to(device)
-            model_output = model(x)  # (batch, z_dim(protonet的超参数决定))
+            model_output = model(x)  # (batch, flatten后的维度 * z_dim)
             loss, acc = loss_fn(model_output, target=y,
                                 n_support=opt.num_support_tr,
                                 n_query=opt.num_query_tr)

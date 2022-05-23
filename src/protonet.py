@@ -34,11 +34,12 @@ class ProtoNet(nn.Module):
 def get_parameter_number(model):
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    M = 1024 * 1024
+    size = total_num / 4. / M
+    print('参数量: %d\n模型大小: %.4fM' % (total_num, size))
     return {'Total': total_num, 'Trainable': trainable_num}
 
 if __name__ == '__main__':
     model = ProtoNet(x_dim=3)
     num_param = get_parameter_number(model)
-    M = 1024 * 1024
-    size = num_param['Total'] / 4. / M
-    print('%.3fM' % size)
