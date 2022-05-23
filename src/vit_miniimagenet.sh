@@ -9,7 +9,7 @@ python train.py \
 --classes_per_it_val 16 \
 --num_support_val 5 \
 --num_query_val 15 \
---height 128 \
---width 128 \
+--height 224 \
+--width 224 \
 --weight_decay 0.001 \
 --cuda cuda:0
