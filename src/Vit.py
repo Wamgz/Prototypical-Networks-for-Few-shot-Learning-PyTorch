@@ -3,6 +3,7 @@ from torch import nn
 
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
+import timm
 
 
 # helpers
@@ -90,8 +91,11 @@ class Transformer(nn.Module):
 
 class ViT(nn.Module):
     def __init__(self, *, image_size, patch_size, out_dim, dim, depth, heads, mlp_dim, pool='cls', channels=1,
-                 dim_head=64, dropout=0., emb_dropout=0.):
+                 dim_head=64, dropout=0., emb_dropout=0., feature_only=False, pretrained=False):
         super().__init__()
+        self.feature_only = feature_only
+        self.pretrained_model = pretrained
+
         image_height, image_width = pair(image_size) # 256, 256
         patch_height, patch_width = pair(patch_size) # 32, 32
 
@@ -124,7 +128,12 @@ class ViT(nn.Module):
             nn.LayerNorm((self.num_patches + 1) * dim),
             nn.Linear((self.num_patches + 1) * dim, out_dim)
         )
+        if feature_only and pretrained:
+            self.pretrained_model = timm.create_model('vit_base_patch16_224', num_classes=1600, pretrained=True)
+
     def forward(self, img):
+        if self.feature_only and self.pretrained:
+            return self.pretrained_model.forward_features(img)
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
         b, n, _ = x.shape
@@ -148,7 +157,7 @@ def get_parameter_number(model):
     return {'Total': total_num, 'Trainable': trainable_num}
 
 if __name__ == '__main__':
-    v = ViT(
+    model = ViT(
         image_size=128,
         patch_size=32,
         out_dim=1600,
@@ -161,7 +170,7 @@ if __name__ == '__main__':
         emb_dropout=0.1,
         channels=3,
     )
-    img = torch.randn(2, 3, 128, 128)
-    out = v(img)
-    print(out.shape)
-    print(get_parameter_number(v))
+    num_param = get_parameter_number(model)
+    M = 1024 * 1024
+    size = num_param['Total'] / 4. / M
+    print('%.3fM' % size)

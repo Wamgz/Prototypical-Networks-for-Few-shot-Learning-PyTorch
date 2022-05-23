@@ -159,12 +159,12 @@ def get_parameter_number(model):
     return {'Total': total_num, 'Trainable': trainable_num}
 
 if __name__ == '__main__':
-    v = ViT_small(
+    model = ViT_small(
         image_size=128,
         patch_size=32,
         out_dim=1600,
         dim=256,
-        depth=2,
+        depth=4,
         heads=8,
         dim_head=64,
         mlp_dim=512,
@@ -173,6 +173,8 @@ if __name__ == '__main__':
         channels=3
     )
     img = torch.randn(2, 3, 128, 128)
-    out = v(img)
-    print(out.shape)
-    print(get_parameter_number(v))
+    out = model(img)
+    num_param = get_parameter_number(model)
+    M = 1024 * 1024
+    size = num_param['Total'] / 4. / M
+    print('%.3fM' % size)

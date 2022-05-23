@@ -37,10 +37,8 @@ def get_parameter_number(model):
     return {'Total': total_num, 'Trainable': trainable_num}
 
 if __name__ == '__main__':
-    v = ProtoNet(x_dim=3)
-    print(get_parameter_number(v))
-    import torch
-    x = torch.randn((1, 3, 84, 84))
-    print(x.shape)
-    out = v(x)
-    print(out.shape)
+    model = ProtoNet(x_dim=3)
+    num_param = get_parameter_number(model)
+    M = 1024 * 1024
+    size = num_param['Total'] / 4. / M
+    print('%.3fM' % size)
