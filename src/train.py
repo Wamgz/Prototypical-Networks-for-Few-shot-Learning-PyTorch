@@ -115,7 +115,12 @@ def init_optim(opt, model):
     '''
     Initialize optimizer
     '''
-    return torch.optim.Adam(params=model.pretrained_model.head.parameters(),
+    if opt.pretrained and opt.model_name == 'vit':
+        return torch.optim.Adam(params=model.pretrained_model.head.parameters(),
+                                lr=opt.learning_rate,
+                                weight_decay=opt.weight_decay)
+
+    return torch.optim.Adam(params=model.parameters(),
                             lr=opt.learning_rate,
                             weight_decay=opt.weight_decay)
 
@@ -148,9 +153,10 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     val_acc = []
     best_acc = 0
 
-
-    best_model_path = os.path.join(opt.experiment_root, opt.dataset_name + '_' + opt.model_name + '_' + 'best_model.pth')
-    last_model_path = os.path.join(opt.experiment_root, opt.dataset_name + '_' + opt.model_name + '_' + 'last_model.pth')
+    best_model_path = os.path.join(opt.experiment_root,
+                                   opt.dataset_name + '_' + opt.model_name + '_' + 'best_model.pth')
+    last_model_path = os.path.join(opt.experiment_root,
+                                   opt.dataset_name + '_' + opt.model_name + '_' + 'last_model.pth')
 
     for epoch in range(opt.epochs):
         logger.info('=== Epoch: {} ==='.format(epoch))

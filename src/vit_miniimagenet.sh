@@ -11,5 +11,6 @@ python train.py \
 --num_query_val 15 \
 --height 224 \
 --width 224 \
+--pretrained false \
 --weight_decay 0.001 \
 --cuda cuda:0

@@ -13,7 +13,6 @@ def get_parser():
                         type=str,
                         help='which dataset to use',
                         default='stanfordCars')
-
     parser.add_argument('-model', '--model_name',
                         type=str,
                         help='which dataset to use',
@@ -102,7 +101,10 @@ def get_parser():
                         type=int,
                         help='input for the manual seeds initializations',
                         default=7)
-
+    parser.add_argument('-pretrained', '--pretrained',
+                        type=bool,
+                        help='if or not to use pretrained model',
+                        default=False)
     parser.add_argument('--cuda',
                         type=str,
                         help='use gpu or cpu',

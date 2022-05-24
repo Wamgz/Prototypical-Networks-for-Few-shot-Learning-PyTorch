@@ -179,3 +179,6 @@ if __name__ == '__main__':
         channels=3,
     )
     num_param = get_parameter_number(model)
+
+    pretrained_model = timm.create_model('vit_base_patch16_224', num_classes=1600, pretrained=True)
+    print(pretrained_model)
