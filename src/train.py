@@ -90,7 +90,6 @@ def init_model(opt):
             dropout=0.1,
             emb_dropout=0.1,
             channels=3,
-            feature_only=True,
             pretrained=opt.pretrained
         ).to(device)
     elif opt.model_name == 'vit_small':

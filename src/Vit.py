@@ -136,7 +136,7 @@ class ViT(nn.Module):
                 param.requires_grad = True
 
     def forward(self, img):
-        if self.feature_only and self.pretrained:
+        if self.pretrained:
             return self.pretrained_model(img)
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
