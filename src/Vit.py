@@ -128,7 +128,7 @@ class ViT(nn.Module):
             nn.LayerNorm((self.num_patches + 1) * dim),
             nn.Linear((self.num_patches + 1) * dim, out_dim)
         )
-        if feature_only and pretrained:
+        if pretrained:
             self.pretrained_model = timm.create_model('vit_base_patch16_224', num_classes=out_dim, pretrained=True)
             for param in self.pretrained_model.parameters():
                 param.requires_grad = False

@@ -1,7 +1,7 @@
 python train.py \
 --dataset_root ~/WZ/data \
 --model_name cnn \
---epochs 1000 \
+--epochs 10000 \
 --dataset_name stanfordCars \
 --classes_per_it_tr 20 \
 --num_support_tr 5 \
