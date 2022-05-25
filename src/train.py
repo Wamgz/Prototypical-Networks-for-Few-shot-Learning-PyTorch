@@ -11,15 +11,12 @@ import numpy as np
 import torch
 import os
 import sys
+cur_path=os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, cur_path+"/..")
 from src.utils.logger_utils import logger
 from src.models.Vit import ViT
 from src.models.vit_for_small_dataset import ViT_small
 from data_loaders.data_fetchers import DataFetcher
-
-cur_path=os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(0, cur_path+"/..")
-if os.curdir not in sys.path:
-    sys.path.append(os.curdir)
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
