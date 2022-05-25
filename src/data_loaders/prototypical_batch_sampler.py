@@ -1,7 +1,10 @@
 # coding=utf-8
 import numpy as np
 import torch
-
+import os
+import sys
+cur_path=os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, cur_path+"/..")
 
 class PrototypicalBatchSampler(object):
     '''

@@ -1,5 +1,4 @@
 import torch
-
 ## 提前取数据加速训练速度
 class DataFetcher:
     def __init__(self, torch_loader):
