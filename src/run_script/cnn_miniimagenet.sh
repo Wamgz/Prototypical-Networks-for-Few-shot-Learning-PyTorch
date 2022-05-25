@@ -1,4 +1,4 @@
-python train.py \
+python ../train.py \
 --dataset_root ~/WZ/data \
 --epochs 1000 \
 --model_name cnn \
