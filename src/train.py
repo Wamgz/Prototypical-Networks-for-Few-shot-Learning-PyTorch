@@ -16,6 +16,8 @@ from src.models.Vit import ViT
 from src.models.vit_for_small_dataset import ViT_small
 from data_loaders.data_fetchers import DataFetcher
 from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
+from torch.utils.tensorboard import SummaryWriter
+import time
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
@@ -72,7 +74,8 @@ def init_dataloader(opt, mode):
         'num_workers': 16
     }
     dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler, **dataloader_params)
-    dataloader = DataFetcher(dataloader)
+    if torch.cuda.is_available():
+        dataloader = DataFetcher(dataloader)
     return dataloader
 
 
@@ -179,14 +182,15 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             optim.step()
             train_loss.append(loss.detach())
             train_acc.append(acc.detach())
-        avg_loss = torch.tensor(train_loss[-opt.iterations:]).mean()
-        avg_acc = torch.tensor(train_acc[-opt.iterations:]).mean()
-        logger.info('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
+        train_avg_loss = torch.tensor(train_loss[-opt.iterations:]).mean()
+        train_avg_acc = torch.tensor(train_acc[-opt.iterations:]).mean()
+        logger.info('Avg Train Loss: {}, Avg Train Acc: {}'.format(train_avg_loss, train_avg_acc))
         lr_scheduler.step()
         if val_dataloader is None:
             continue
         val_iter = iter(val_dataloader)
         model.eval()
+        val_avg_loss, val_avg_acc = 0., 0.
         with torch.no_grad():
             for batch in val_iter:
                 x, y = batch
@@ -197,16 +201,24 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                                     n_query=opt.num_query_val)
                 val_loss.append(loss.detach())
                 val_acc.append(acc.detach())
-            avg_loss = torch.tensor(val_loss[-opt.iterations:]).mean()
-            avg_acc = torch.tensor(val_acc[-opt.iterations:]).mean()
-            postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
+            val_avg_loss = torch.tensor(val_loss[-opt.iterations:]).mean()
+            val_avg_acc = torch.tensor(val_acc[-opt.iterations:]).mean()
+            postfix = ' (Best)' if val_avg_acc >= best_acc else ' (Best: {})'.format(
                 best_acc)
             logger.info('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
-                avg_loss, avg_acc, postfix))
-            if avg_acc >= best_acc:
+                val_avg_loss, val_avg_acc, postfix))
+            if val_avg_acc >= best_acc:
                 torch.save(model.state_dict(), best_model_path)
-                best_acc = avg_acc
+                best_acc = val_avg_acc
                 best_state = model.state_dict()
+
+        if not os.path.exists('./tb-logs'):
+            os.mkdir('./tb-logs')
+        with SummaryWriter(log_dir='./tb-logs', comment=opt.model_name + '-' + opt.dataset_name + str(time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))) as writer:  # 可以直接使用python的with语法，自动调用close方法
+            writer.add_scalar('train/loss', train_avg_loss, epoch)
+            writer.add_scalar('train/acc', train_avg_acc, epoch)
+            writer.add_scalar('val/loss', val_avg_loss, epoch)
+            writer.add_scalar('val/acc', val_avg_acc, epoch)
 
     torch.save(model.state_dict(), last_model_path)
 
