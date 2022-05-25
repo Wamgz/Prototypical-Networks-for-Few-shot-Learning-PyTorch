@@ -1,9 +1,9 @@
 # coding=utf-8
-from prototypical_batch_sampler import PrototypicalBatchSampler
+from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
 from prototypical_loss import prototypical_loss as loss_fn
 from datasets.omniglot_dataset import OmniglotDataset
-from protonet import ProtoNet
-from parser_util import get_parser
+from src.models.protonet import ProtoNet
+from src.utils.parser_util import get_parser
 from datasets.miniimagenet import MiniImageNet
 from datasets.stanfordCars import StanfordCars
 from tqdm import tqdm
@@ -11,9 +11,10 @@ import numpy as np
 import torch
 import os
 import sys
-from logger_utils import logger
-from Vit import ViT
-from vit_for_small_dataset import ViT_small
+from src.utils.logger_utils import logger
+from src.models.Vit import ViT
+from src.models.vit_for_small_dataset import ViT_small
+from data_loaders.data_fetchers import DataFetcher
 
 if os.curdir not in sys.path:
     sys.path.append(os.curdir)
@@ -68,6 +69,7 @@ def init_dataloader(opt, mode):
     dataset = init_dataset(opt, mode)
     sampler = init_sampler(opt, dataset.y, mode)
     dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler)
+    dataloader = DataFetcher(dataloader)
     return dataloader
 
 
@@ -79,7 +81,7 @@ def init_model(opt):
         return ProtoNet(x_dim=opt.channel).to(device)
     elif opt.model_name == 'vit':
         return ViT(
-            image_size=128,
+            image_size=min(opt.height, opt.width),
             patch_size=32,
             out_dim=1600,
             dim=256,
@@ -127,6 +129,7 @@ def init_optim(opt, model):
 def init_lr_scheduler(opt, optim):
     '''
     Initialize the learning rate scheduler
+    TODO 调整lr衰减
     '''
     return torch.optim.lr_scheduler.StepLR(optimizer=optim,
                                            gamma=opt.lr_scheduler_gamma,

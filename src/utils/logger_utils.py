@@ -1,7 +1,7 @@
 import logging
 import os.path
 from logging import handlers
-from parser_util import get_parser
+from src.utils.parser_util import get_parser
 import time
 
 class Logger(object):
@@ -36,7 +36,7 @@ class Logger(object):
 
 now = time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
 options = get_parser().parse_args()
-log_dir = os.path.join('../', 'log')
+log_dir = os.path.join('../../', 'log')
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 

@@ -7,7 +7,9 @@ import errno
 import torch
 import os
 import logging
-from logger_utils import Logger
+import sys
+
+from src.utils.logger_utils import Logger
 
 '''
 Inspired by https://github.com/pytorch/vision/pull/46

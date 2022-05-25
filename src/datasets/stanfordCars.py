@@ -13,7 +13,7 @@ import pickle
 if '..' not in sys.path:
     sys.path.append('..')
 
-from logger_utils import logger
+from src.utils.logger_utils import logger
 
 class StanfordCars(data.Dataset):
     '''

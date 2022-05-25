@@ -7,7 +7,13 @@ import csv
 import torch.utils.data as data
 from torchvision import transforms as transforms
 import sys
-from logger_utils import logger
+if '..' not in sys.path:
+    sys.path.append('..')
+
+from src.utils.parser_util import get_parser
+from src.utils.logger_utils import logger
+
+import torch
 
 class MiniImageNet(data.Dataset):
     '''
@@ -60,88 +66,40 @@ class MiniImageNet(data.Dataset):
     def __len__(self):
         return len(self.x)
 
-    def load_data_pkl(self):
-        """
-            load the pkl processed mini-imagenet into label,unlabel
-        """
+class FastCollate:
+    def __init__(self, nw, ns, nq, bs):
+        self.nw, self.ns, self.nq = nw, ns, nq
+        self.bs = bs
 
-        pkl_name = '{}/miniImagenet/data/mini-imagenet-cache-{}.pkl'.format(self.root, self.split)
-        logger.info('Loading pkl data: {} '.format(pkl_name))
+    def __call__(self, batch):
+        # batch [(img, label), (img, label), (img, label), ···] 共batch
+        imgs = [img[0] for img in batch]
+        targets = torch.tensor([target[1] for target in batch], dtype=torch.int64)
 
-        try:
-            with open(pkl_name, "rb") as f:
-                data = pkl.load(f, encoding='bytes')
-                image_data = data[b'image_data']
-                class_dict = data[b'class_dict']
-        except:
-            with open(pkl_name, "rb") as f:
-                data = pkl.load(f)
-                image_data = data['image_data']  # (38400, 84, 84, 3)
-                class_dict = data['class_dict']  # dict, key_num = 64, {'n01532829': [0, 1, 2···599]}
-        data_classes = sorted(class_dict.keys())
-        for i, cls in enumerate(data_classes):
-            idxs = class_dict[cls]
-            np.random.RandomState(self.seed).shuffle(idxs)  # fix the seed to keep label,unlabel fixed
-            self.x[i] = image_data[idxs]
+        w = imgs[0].shape[1]
+        h = imgs[0].shape[2]
+        episodic_targets = torch.from_numpy(
+            np.repeat(np.repeat(range(self.nw), self.ns + self.nq), self.bs)
+        ).reshape(-1, self.bs).permute(1, 0).reshape(-1)
+        # print(targets, episodic_targets)
+        return tensor, targets, episodic_targets
 
-        logger.info(data.keys(), image_data.shape, class_dict.keys())
-        data_classes = sorted(class_dict.keys())  # sorted to keep the order
+if __name__ == '__main__':
+    options = get_parser().parse_args()
+    dataset = MiniImageNet(mode='train', opt=options)
+    classes_per_it = 20
+    num_samples = 20
+    from prototypical_batch_sampler import PrototypicalBatchSampler
+    sampler = PrototypicalBatchSampler(labels=dataset.y,
+                                    classes_per_it=classes_per_it,
+                                    num_samples=num_samples,
+                                    iterations=100)
+    from tqdm import tqdm
 
-        n_classes = len(data_classes) # 64
-        logger.info('n_classes:{}, n_label:{}'.format(n_classes, self.n_label))
-        dataset_l = np.zeros([n_classes, self.n_label, self.im_height, self.im_width, self.channels], dtype=np.float32) #(64, 600, 84, 84, 3) n_label是每个class下的sample个数
-        if self.n_unlabel > 0:
-            dataset_u = np.zeros([n_classes, self.n_unlabel, self.im_height, self.im_width, self.channels],
-                                 dtype=np.float32)
-        else:
-            dataset_u = []
-        # 每个class下600个sample
-        for i, cls in enumerate(data_classes):
-            idxs = class_dict[cls]
-            np.random.RandomState(self.seed).shuffle(idxs)  # fix the seed to keep label,unlabel fixed
-            dataset_l[i] = image_data[idxs[0:self.n_label]]
-            if self.n_unlabel > 0:
-                dataset_u[i] = image_data[idxs[self.n_label:]]
-        logger.info('labeled data:', np.shape(dataset_l))
-        logger.info('unlabeled data:', np.shape(dataset_u))
 
-        self.x = dataset_l
-        self.dataset_u = dataset_u
-        self.n_classes = n_classes
-
-        del image_data
-
-    def next_data(self, n_way, n_shot, n_query, num_unlabel=0, n_distractor=0, train=True):
-        """
-            get support,query,unlabel data from n_way
-            get unlabel data from n_distractor
-        """
-        support = np.zeros([n_way, n_shot, self.im_height, self.im_width, self.channels], dtype=np.float32)
-        query = np.zeros([n_way, n_query, self.im_height, self.im_width, self.channels], dtype=np.float32)
-        if num_unlabel > 0:
-            unlabel = np.zeros([n_way + n_distractor, num_unlabel, self.im_height, self.im_width, self.channels],
-                               dtype=np.float32)
-        else:
-            unlabel = []
-            n_distractor = 0
-        # 取哪几个class作为support和query set
-        selected_classes = np.random.permutation(self.n_classes)[:n_way + n_distractor]
-        for i, cls in enumerate(selected_classes[0:n_way]):  # train way
-            # labled data
-            idx1 = np.random.permutation(self.n_label)[:n_shot + n_query] # 从trainset里取出support set和query set
-            support[i] = self.x[cls, idx1[:n_shot]]
-            query[i] = self.x[cls, idx1[n_shot:]]
-            # unlabel
-            if num_unlabel > 0:
-                idx2 = np.random.permutation(self.n_unlabel)[:num_unlabel]
-                unlabel[i] = self.dataset_u[cls, idx2]
-
-        for j, cls in enumerate(selected_classes[self.n_classes:]):  # distractor way
-            idx3 = np.random.permutation(self.n_unlabel)[:num_unlabel]
-            unlabel[i + j] = self.dataset_u[cls, idx3]
-
-        support_labels = np.tile(np.arange(n_way)[:, np.newaxis], (1, n_shot)).astype(np.uint8)
-        query_labels = np.tile(np.arange(n_way)[:, np.newaxis], (1, n_query)).astype(np.uint8)
-        # unlabel_labels = np.tile(np.arange(n_way+n_distractor)[:, np.newaxis], (1, num_unlabel)).astype(np.uint8)
-
-        return support, support_labels, query, query_labels, unlabel
+    data_loader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler,
+                                              collate_fn=FastCollate(20, 5, 15, 1))
+    data_loader = iter(data_loader)
+    for batch in tqdm(data_loader):
+        tensor, labels, episode_labels = batch
+        print()
