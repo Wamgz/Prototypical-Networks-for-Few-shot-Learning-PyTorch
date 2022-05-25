@@ -17,7 +17,6 @@ from src.models.vit_for_small_dataset import ViT_small
 from data_loaders.data_fetchers import DataFetcher
 from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
 
-
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
 
@@ -67,7 +66,13 @@ def init_sampler(opt, labels, mode, dataset_name='miniImagenet'):
 def init_dataloader(opt, mode):
     dataset = init_dataset(opt, mode)
     sampler = init_sampler(opt, dataset.y, mode)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler)
+
+    dataloader_params = {
+        'pin_memory': True,
+        'num_workers': 16,
+        'persistent_workers': True,
+    }
+    dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler, **dataloader_params)
     dataloader = DataFetcher(dataloader)
     return dataloader
 
