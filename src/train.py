@@ -1,5 +1,7 @@
-# coding=utf-8
-from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
+import os
+import sys
+cur_path=os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, cur_path+"/..")
 from prototypical_loss import prototypical_loss as loss_fn
 from datasets.omniglot_dataset import OmniglotDataset
 from src.models.protonet import ProtoNet
@@ -9,14 +11,12 @@ from datasets.stanfordCars import StanfordCars
 from tqdm import tqdm
 import numpy as np
 import torch
-import os
-import sys
-cur_path=os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(0, cur_path+"/..")
 from src.utils.logger_utils import logger
 from src.models.Vit import ViT
 from src.models.vit_for_small_dataset import ViT_small
 from data_loaders.data_fetchers import DataFetcher
+from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
+
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
