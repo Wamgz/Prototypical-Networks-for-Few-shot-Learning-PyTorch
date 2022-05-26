@@ -9,8 +9,8 @@ python ../train.py \
 --classes_per_it_val 16 \
 --num_support_val 5 \
 --num_query_val 15 \
---height 84 \
---width 84 \
+--height 96 \
+--width 96 \
 --iterations 100 \
 --weight_decay 0.01 \
 --cuda cuda:0

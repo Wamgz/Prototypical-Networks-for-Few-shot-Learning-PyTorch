@@ -219,8 +219,8 @@ def get_parameter_number(model):
 
 if __name__ == '__main__':
     model = ViT(
-        image_size=84,
-        patch_size=4,
+        image_size=96,
+        patch_size=8,
         out_dim=128,
         embed_dim=96,
         depth=4,
@@ -232,7 +232,7 @@ if __name__ == '__main__':
         channels=3
     )
 
-    # x = torch.randn((2, 3, 84, 84))
-    # print(model(x).shape)
+    x = torch.randn((400, 3, 96, 96))
+    print(model(x).shape)
 
     num_param = get_parameter_number(model)

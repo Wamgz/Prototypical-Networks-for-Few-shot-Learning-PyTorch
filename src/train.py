@@ -89,8 +89,8 @@ def init_model(opt):
         return ProtoNet(x_dim=opt.channel).to(device)
     elif opt.model_name == 'vit':
         return ViT(
-            image_size=84,
-            patch_size=4,
+            image_size=96,
+            patch_size=8,
             out_dim=128,
             embed_dim=96,
             depth=4,
