@@ -73,7 +73,7 @@ def init_dataloader(opt, mode):
 
     dataloader_params = {
         'pin_memory': True,
-        'num_workers': 16
+        'num_workers': 8
     }
     dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler, **dataloader_params)
     if torch.cuda.is_available():
