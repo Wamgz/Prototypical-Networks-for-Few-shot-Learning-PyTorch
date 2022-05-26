@@ -235,4 +235,4 @@ if __name__ == '__main__':
     # x = torch.randn((2, 3, 84, 84))
     # print(model(x).shape)
 
-    # num_param = get_parameter_number(model.pretrained_model)
+    num_param = get_parameter_number(model)

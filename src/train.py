@@ -162,7 +162,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     last_model_path = os.path.join(opt.experiment_root,
                                    opt.dataset_name + '_' + opt.model_name + '_' + 'last_model.pth')
 
-    env = Visdom()
+    env = Visdom(env=opt.model_name + '-' + opt.dataset_name)
     train_loss_pane, train_acc_pane = new_pane(env, 'train_loss'), new_pane(env, 'train_acc')
     val_loss_pane, val_acc_pane = new_pane(env, 'val-loss'), new_pane(env, 'val_acc')
 
