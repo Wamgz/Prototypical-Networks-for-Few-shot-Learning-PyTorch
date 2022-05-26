@@ -17,7 +17,9 @@ from src.models.vit_for_small_dataset import ViT_small
 from data_loaders.data_fetchers import DataFetcher
 from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
 from torch.utils.tensorboard import SummaryWriter
+from src.utils.visdom_utils import new_pane, append2pane
 import time
+from visdom import Visdom
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
@@ -166,6 +168,10 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     last_model_path = os.path.join(opt.experiment_root,
                                    opt.dataset_name + '_' + opt.model_name + '_' + 'last_model.pth')
 
+    env = Visdom()
+    train_loss_pane, train_acc_pane = new_pane(env, 'train_loss'), new_pane(env, 'train_acc')
+    val_loss_pane, val_acc_pane = new_pane(env, 'val-loss'), new_pane(env, 'val_acc')
+
     for epoch in range(opt.epochs):
         logger.info('=== Epoch: {} ==='.format(epoch))
         tr_iter = iter(tr_dataloader)
@@ -185,6 +191,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         train_avg_loss = torch.tensor(train_loss[-opt.iterations:]).mean()
         train_avg_acc = torch.tensor(train_acc[-opt.iterations:]).mean()
         logger.info('Avg Train Loss: {}, Avg Train Acc: {}'.format(train_avg_loss, train_avg_acc))
+        append2pane(torch.FloatTensor([epoch]), train_avg_loss, env, train_loss_pane)
+        append2pane(torch.FloatTensor([epoch]), train_avg_acc, env, train_acc_pane)
         lr_scheduler.step()
         if val_dataloader is None:
             continue
@@ -205,20 +213,15 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             val_avg_acc = torch.tensor(val_acc[-opt.iterations:]).mean()
             postfix = ' (Best)' if val_avg_acc >= best_acc else ' (Best: {})'.format(
                 best_acc)
+            append2pane(torch.FloatTensor([epoch]), val_avg_loss, env, val_loss_pane)
+            append2pane(torch.FloatTensor([epoch]), val_avg_acc, env, val_acc_pane)
+
             logger.info('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
                 val_avg_loss, val_avg_acc, postfix))
             if val_avg_acc >= best_acc:
                 torch.save(model.state_dict(), best_model_path)
                 best_acc = val_avg_acc
                 best_state = model.state_dict()
-
-        if not os.path.exists('./tb-logs'):
-            os.mkdir('./tb-logs')
-        with SummaryWriter(log_dir='./tb-logs', comment=opt.model_name + '-' + opt.dataset_name + str(time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))) as writer:  # 可以直接使用python的with语法，自动调用close方法
-            writer.add_scalar('train/loss', train_avg_loss, epoch)
-            writer.add_scalar('train/acc', train_avg_acc, epoch)
-            writer.add_scalar('val/loss', val_avg_loss, epoch)
-            writer.add_scalar('val/acc', val_avg_acc, epoch)
 
     torch.save(model.state_dict(), last_model_path)
 

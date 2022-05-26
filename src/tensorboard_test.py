@@ -1,24 +1,25 @@
 import torch
+import math
 import numpy as np
-import torch.nn as nn
-import torch.nn.functional as F
-from PIL import Image
-from torchvision import transforms
-from torchvision import models,datasets
-from torch.utils.tensorboard import SummaryWriter
+from visdom import Visdom
+import time
+torch.__version__
 
-x = torch.FloatTensor([100])
-y = torch.FloatTensor([500])
 
-for epoch in range(30):
-    x = x * 1.2
-    y = y / 1.1
-    loss = np.random.random()
-    with SummaryWriter(log_dir='./logs', comment='train') as writer: #可以直接使用python的with语法，自动调用close方法
-        writer.add_histogram('his/x', x, epoch)
-        writer.add_histogram('his/y', y, epoch)
-        writer.add_scalar('data/x', x, epoch)
-        writer.add_scalar('data/y', y, epoch)
-        writer.add_scalar('data/loss', loss, epoch)
-        writer.add_scalars('data/data_group', {'x': x,
-                                                'y': y}, epoch)
+env2 = Visdom()
+pane1= env2.line(
+    X=torch.FloatTensor([0]),
+    Y=torch.FloatTensor([0]),
+    opts=dict(title='dynamic data'))
+
+x,y=0,0
+for i in range(10):
+    time.sleep(1) #每隔一秒钟打印一次数据
+    x+=i
+    y=(y+i)*1.5
+    print(x,y)
+    env2.line(
+        X=torch.FloatTensor([x]),
+        Y=torch.FloatTensor([y]),
+        win=pane1,#win参数确认使用哪一个pane
+        update='append') #我们做的动作是追加，除了追加意外还有其他方式，这里我们不做介绍了
