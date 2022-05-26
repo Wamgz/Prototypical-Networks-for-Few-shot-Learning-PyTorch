@@ -65,7 +65,7 @@ def get_parser():
     parser.add_argument('-its', '--iterations',
                         type=int,
                         help='number of episodes per epoch, default=100',
-                        default=1)
+                        default=100)
 
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,
