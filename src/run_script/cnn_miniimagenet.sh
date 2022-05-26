@@ -14,4 +14,4 @@ python ../train.py \
 --iterations 100 \
 --weight_decay 0.001 \
 --learning_rate 0.0001 \
---cuda cuda:0
+--cuda cuda:2
