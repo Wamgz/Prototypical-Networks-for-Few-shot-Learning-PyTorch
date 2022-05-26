@@ -1,6 +1,6 @@
 python ../train.py \
 --dataset_root ~/WZ/data \
---epochs 10000 \
+--epochs 1000 \
 --model_name cnn \
 --dataset_name miniImagenet \
 --classes_per_it_tr 20 \
