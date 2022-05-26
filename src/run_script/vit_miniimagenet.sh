@@ -12,5 +12,4 @@ python ../train.py \
 --height 96 \
 --width 96 \
 --iterations 100 \
---weight_decay 0.01 \
 --cuda cuda:0
