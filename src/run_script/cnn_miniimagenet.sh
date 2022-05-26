@@ -1,6 +1,6 @@
 python ../train.py \
 --dataset_root ~/WZ/data \
---epochs 2000 \
+--epochs 3000 \
 --model_name cnn \
 --dataset_name miniImagenet \
 --classes_per_it_tr 20 \
@@ -12,6 +12,6 @@ python ../train.py \
 --height 84 \
 --width 84 \
 --iterations 100 \
---weight_decay 0.01 \
+--weight_decay 0.001 \
 --learning_rate 0.0001 \
 --cuda cuda:0
