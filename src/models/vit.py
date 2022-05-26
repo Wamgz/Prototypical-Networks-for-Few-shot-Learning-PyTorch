@@ -221,7 +221,7 @@ if __name__ == '__main__':
     model = ViT(
         image_size=96,
         patch_size=8,
-        out_dim=96,
+        out_dim=64,
         embed_dim=64,
         depth=4,
         heads=16,
