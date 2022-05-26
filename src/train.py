@@ -12,7 +12,7 @@ from tqdm import tqdm
 import numpy as np
 import torch
 from src.utils.logger_utils import logger
-from src.models.Vit import ViT
+from src.models.vit import ViT
 from src.models.vit_for_small_dataset import ViT_small
 from data_loaders.data_fetchers import DataFetcher
 from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
@@ -89,18 +89,17 @@ def init_model(opt):
         return ProtoNet(x_dim=opt.channel).to(device)
     elif opt.model_name == 'vit':
         return ViT(
-            image_size=min(opt.height, opt.width),
-            patch_size=32,
-            out_dim=1600,
-            dim=256,
+            image_size=84,
+            patch_size=4,
+            out_dim=128,
+            embed_dim=96,
             depth=4,
-            heads=8,
-            dim_head=64,
-            mlp_dim=512,
-            dropout=0.1,
+            heads=16,
+            dim_head=8,
+            mlp_dim=128,
+            tsfm_dropout=0.1,
             emb_dropout=0.1,
-            channels=3,
-            pretrained=opt.pretrained
+            channels=3
         ).to(device)
     elif opt.model_name == 'vit_small':
         return ViT_small(
@@ -124,12 +123,7 @@ def init_optim(opt, model):
     '''
     Initialize optimizer
     '''
-    if opt.pretrained and opt.model_name == 'vit':
-        return torch.optim.Adam(params=model.pretrained_model.head.parameters(),
-                                lr=opt.learning_rate,
-                                weight_decay=opt.weight_decay)
-
-    return torch.optim.Adam(params=model.parameters(),
+    return torch.optim.Adam(params=model.trainable_params(),
                             lr=opt.learning_rate,
                             weight_decay=opt.weight_decay)
 

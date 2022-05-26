@@ -153,6 +153,9 @@ class ViT_small(nn.Module):
         #
         # x = self.to_latent(x)
         # return self.mlp_head(x)
+
+    def trainable_params(self):
+        return self.parameters()
 def get_parameter_number(model):
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)

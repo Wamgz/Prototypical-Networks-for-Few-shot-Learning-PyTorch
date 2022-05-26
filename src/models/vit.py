@@ -4,6 +4,7 @@ from torch import nn
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 import timm
+from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
 
 # helpers
@@ -40,10 +41,10 @@ class FeedForward(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, dim, heads=8, dim_head=64, dropout=0.):
+    def __init__(self, embed_dim, heads=8, dim_head=64, dropout=0.):
         super().__init__()
         inner_dim = dim_head * heads # 1024  TODO，innerdim和dim有什么区别
-        project_out = not (heads == 1 and dim_head == dim)
+        project_out = not (heads == 1 and dim_head == embed_dim)
 
         self.heads = heads
         self.scale = dim_head ** -0.5
@@ -51,10 +52,10 @@ class Attention(nn.Module):
         self.attend = nn.Softmax(dim=-1)
         self.dropout = nn.Dropout(dropout)
 
-        self.to_qkv = nn.Linear(dim, inner_dim * 3, bias=False)
+        self.to_qkv = nn.Linear(embed_dim, inner_dim * 3, bias=False)
 
         self.to_out = nn.Sequential(
-            nn.Linear(inner_dim, dim),
+            nn.Linear(inner_dim, embed_dim),
             nn.Dropout(dropout)
         ) if project_out else nn.Identity()
 
@@ -73,13 +74,13 @@ class Attention(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, dim, depth, heads, dim_head, mlp_dim, dropout=0.):
+    def __init__(self, embed_dim, depth, heads, dim_head, mlp_dim, dropout=0.):
         super().__init__()
         self.layers = nn.ModuleList([])
         for _ in range(depth):
             self.layers.append(nn.ModuleList([ # 这里是先进行norm，再进行Attention和FFN
-                PreNorm(dim, Attention(dim, heads=heads, dim_head=dim_head, dropout=dropout)),
-                PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout))
+                PreNorm(embed_dim, Attention(embed_dim, heads=heads, dim_head=dim_head, dropout=dropout)),
+                PreNorm(embed_dim, FeedForward(embed_dim, mlp_dim, dropout=dropout))
             ]))
 
     def forward(self, x):
@@ -88,15 +89,53 @@ class Transformer(nn.Module):
             x = ff(x) + x
         return x
 
+class PatchEmbed(nn.Module):
+    r""" Image to Patch Embedding
+
+    Args:
+        img_size (int): Image size.  Default: 224.
+        patch_size (int): Patch token size. Default: 4.
+        in_chans (int): Number of input image channels. Default: 3.
+        embed_dim (int): Number of linear projection output channels. Default: 96.
+        norm_layer (nn.Module, optional): Normalization layer. Default: None
+    """
+
+    def __init__(self, img_size=84, patch_size=4, in_chans=3, embed_dim=96, norm_layer=None):
+        super().__init__()
+        img_size = to_2tuple(img_size)
+        patch_size = to_2tuple(patch_size)
+        patches_resolution = [img_size[0] // patch_size[0], img_size[1] // patch_size[1]]
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.patches_resolution = patches_resolution
+        self.num_patches = patches_resolution[0] * patches_resolution[1]
+
+        self.in_chans = in_chans
+        self.embed_dim = embed_dim
+
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
+        if norm_layer is not None:
+            self.norm = norm_layer(embed_dim)
+        else:
+            self.norm = None
+
+    def forward(self, x):
+        B, C, H, W = x.shape
+        assert H == self.img_size[0] and W == self.img_size[1], \
+            f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
+        x = self.proj(x).flatten(2).transpose(1, 2)  # （1, 3, 224, 224） -> (1, 96, 56 ,56) -> (1, 96, 56 * 56) -> (1, 3136, 96)B Ph*Pw C
+        if self.norm is not None:
+            x = self.norm(x)
+        return x
+
 
 class ViT(nn.Module):
-    def __init__(self, *, image_size, patch_size, out_dim, dim, depth, heads, mlp_dim, pool='cls', channels=1,
-                 dim_head=64, dropout=0., emb_dropout=0., feature_only=False, pretrained=False):
+    def __init__(self, *, image_size, patch_size, out_dim, embed_dim, depth, heads, mlp_dim, pool='cls', channels=1,
+                 dim_head=12, tsfm_dropout=0., emb_dropout=0., feature_only=False, pretrained=False, patch_norm=True, conv_patch_embedding=True):
         super().__init__()
-        self.feature_only = feature_only
         self.pretrained = pretrained
 
-        image_height, image_width = pair(image_size) # 256, 256
+        image_height, image_width = pair(image_size) #
         patch_height, patch_width = pair(patch_size) # 32, 32
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
@@ -104,29 +143,38 @@ class ViT(nn.Module):
         self.num_patches = (image_height // patch_height) * (image_width // patch_width) # 64
         patch_dim = channels * patch_height * patch_width # 3072
         assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
-        # (2, 3, 256, 256)
-        self.to_patch_embedding = nn.Sequential(
-            Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_height, p2=patch_width),
-            nn.Linear(patch_dim, dim), # patch dim: 3072, dim: 1024
-        )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, self.num_patches + 1, dim))
-        self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
+        self.conv_patch_embedding = conv_patch_embedding
+        if self.conv_patch_embedding:
+            ## 卷积实现patch_embedding
+            self.to_patch_embedding = PatchEmbed(
+                img_size=image_size, patch_size=patch_size, in_chans=channels, embed_dim=embed_dim,
+                norm_layer=nn.LayerNorm if patch_norm else None)
+        else:
+            ## MLP实现patch_embedding
+            self.to_patch_embedding = nn.Sequential(
+                Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_height, p2=patch_width),
+                nn.Linear(patch_dim, embed_dim), # patch dim: 3072, dim: 1024
+            )
+
+
+        self.pos_embedding = nn.Parameter(torch.randn(1, self.num_patches + 1, embed_dim))
+        self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
         self.dropout = nn.Dropout(emb_dropout)
         # dim: 1024, depth: 6, heads: 16, dim_head: 64, mlp_dim: 2048, dropout: 0.1
-        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
+        self.transformer = Transformer(embed_dim, depth, heads, dim_head, mlp_dim, tsfm_dropout)
 
         self.pool = pool
         self.to_latent = nn.Identity()
 
         self.mlp_head = nn.Sequential(
-            nn.LayerNorm(dim),
-            nn.Linear(dim, out_dim)
+            nn.LayerNorm(embed_dim),
+            nn.Linear(embed_dim, out_dim)
         )
 
         self.out_head = nn.Sequential(
-            nn.LayerNorm((self.num_patches + 1) * dim),
-            nn.Linear((self.num_patches + 1) * dim, out_dim)
+            nn.LayerNorm((self.num_patches + 1) * embed_dim),
+            nn.Linear((self.num_patches + 1) * embed_dim, out_dim)
         )
         if pretrained:
             self.pretrained_model = timm.create_model('vit_base_patch16_224', num_classes=out_dim, pretrained=True)
@@ -155,6 +203,11 @@ class ViT(nn.Module):
         # x = self.to_latent(x) # (batch, patch_size * patch_size)
         # return self.mlp_head(x) # (batch, num_classes)
 
+    def trainable_params(self):
+        if self.pretrained:
+            return self.pretrained_model.head.parameters()
+        return self.parameters()
+
 def get_parameter_number(model):
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -166,17 +219,20 @@ def get_parameter_number(model):
 
 if __name__ == '__main__':
     model = ViT(
-        image_size=224,
-        patch_size=32,
-        out_dim=1600,
-        dim=256,
+        image_size=84,
+        patch_size=4,
+        out_dim=128,
+        embed_dim=96,
         depth=4,
-        heads=8,
-        dim_head=64,
-        mlp_dim=512,
-        dropout=0.1,
+        heads=16,
+        dim_head=8,
+        mlp_dim=128,
+        tsfm_dropout=0.1,
         emb_dropout=0.1,
-        channels=3,
-        pretrained=True
+        channels=3
     )
-    num_param = get_parameter_number(model.pretrained_model)
+
+    # x = torch.randn((2, 3, 84, 84))
+    # print(model(x).shape)
+
+    # num_param = get_parameter_number(model.pretrained_model)

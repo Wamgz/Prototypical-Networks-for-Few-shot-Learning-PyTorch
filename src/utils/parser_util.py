@@ -60,12 +60,12 @@ def get_parser():
     parser.add_argument('-lrG', '--lr_scheduler_gamma',
                         type=float,
                         help='StepLR learning rate scheduler gamma, default=0.5',
-                        default=0.8)
+                        default=0.9)
 
     parser.add_argument('-its', '--iterations',
                         type=int,
                         help='number of episodes per epoch, default=100',
-                        default=100)
+                        default=1)
 
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,

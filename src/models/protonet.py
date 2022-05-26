@@ -31,6 +31,9 @@ class ProtoNet(nn.Module):
         x = self.encoder(x)
         return x.view(x.size(0), -1)
 
+    def trainable_params(self):
+        return self.parameters()
+
 def get_parameter_number(model):
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
