@@ -46,7 +46,7 @@ def get_parser():
     parser.add_argument('-lr', '--learning_rate',
                         type=float,
                         help='learning rate for the model, default=0.001',
-                        default=0.001)
+                        default=0.0001)
 
     parser.add_argument('-wd', '--weight_decay',
                         type=float,
