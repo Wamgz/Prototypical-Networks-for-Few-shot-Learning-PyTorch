@@ -91,12 +91,12 @@ def init_model(opt):
         return ViT(
             image_size=96,
             patch_size=8,
-            out_dim=128,
-            embed_dim=96,
+            out_dim=64,
+            embed_dim=64,
             depth=4,
             heads=16,
             dim_head=8,
-            mlp_dim=128,
+            mlp_dim=64,
             tsfm_dropout=0.1,
             emb_dropout=0.1,
             channels=3
