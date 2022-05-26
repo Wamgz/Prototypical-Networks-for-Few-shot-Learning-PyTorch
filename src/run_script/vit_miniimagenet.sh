@@ -1,6 +1,6 @@
 python ../train.py \
 --dataset_root ~/WZ/data \
---epochs 2000 \
+--epochs 3000 \
 --model_name vit \
 --dataset_name miniImagenet \
 --classes_per_it_tr 20 \
@@ -11,5 +11,6 @@ python ../train.py \
 --num_query_val 15 \
 --height 96 \
 --width 96 \
+--weight_decay 0.001 \
 --iterations 100 \
 --cuda cuda:0
