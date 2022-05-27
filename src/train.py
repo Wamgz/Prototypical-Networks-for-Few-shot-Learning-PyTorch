@@ -1,3 +1,4 @@
+# coding=UTF-8
 import os
 import sys
 cur_path=os.path.abspath(os.path.dirname(__file__))
