@@ -14,4 +14,4 @@ python ../train.py \
 --width 96 \
 --weight_decay 0.001 \
 --iterations 100 \
---cuda 1 \
+--cuda 3
