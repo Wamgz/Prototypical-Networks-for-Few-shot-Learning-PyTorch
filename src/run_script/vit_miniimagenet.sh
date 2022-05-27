@@ -12,4 +12,4 @@ python ../train.py \
 --height 96 \
 --width 96 \
 --iterations 100 \
---cuda cuda:0
+--cuda cuda:1
