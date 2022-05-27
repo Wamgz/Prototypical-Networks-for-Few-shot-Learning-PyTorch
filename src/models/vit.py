@@ -63,7 +63,7 @@ class Attention(nn.Module):
         qkv = self.to_qkv(x).chunk(3, dim=-1) # tuple: ((600, 65, 1024), (600, 65, 1024), (600, 65, 1024))
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # (600, 16, 65, 64)
 
-        dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
+        dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale # (batch, num_patch * num_patch, num_patch * num_patch)
 
         attn = self.attend(dots) # q和k的相似度矩阵, attn: (600, 16, 65, 65)
         attn = self.dropout(attn)
@@ -131,7 +131,8 @@ class PatchEmbed(nn.Module):
 
 class ViT(nn.Module):
     def __init__(self, *, image_size, patch_size, out_dim, embed_dim, depth, heads, mlp_dim, pool='cls', channels=1,
-                 dim_head=12, tsfm_dropout=0., emb_dropout=0., feature_only=False, pretrained=False, patch_norm=True, conv_patch_embedding=True):
+                 dim_head=12, tsfm_dropout=0., emb_dropout=0., feature_only=False, pretrained=False, patch_norm=True, conv_patch_embedding=True,
+                 use_avg_pool_out=False):
         super().__init__()
         self.pretrained = pretrained
 
@@ -171,6 +172,9 @@ class ViT(nn.Module):
             nn.LayerNorm(embed_dim),
             nn.Linear(embed_dim, out_dim)
         )
+        self.use_avg_pool_out = use_avg_pool_out
+        self.norm = nn.LayerNorm(patch_height * patch_width) ## TODO 维度确定
+        self.avg_pool = nn.AdaptiveAvgPool1d(1) ## TODO 维度确定
 
         self.out_head = nn.Sequential(
             nn.LayerNorm((self.num_patches + 1) * embed_dim),
@@ -196,8 +200,14 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
-        x = x.view(b, -1)
-        return self.out_head(x)
+        if self.use_avg_pool_out:
+            x = self.norm(x)
+            x = self.avg_pool(x)  # B C 1
+            x = torch.flatten(x, 1)
+            return x
+        else:
+            x = x.view(b, -1)
+            return self.out_head(x)
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] # 一张图片的所有patch取了平均值 (batch, patch_size * patch_size)
         #
         # x = self.to_latent(x) # (batch, patch_size * patch_size)
