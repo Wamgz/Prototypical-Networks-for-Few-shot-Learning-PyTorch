@@ -1,4 +1,5 @@
 # coding=UTF-8
+CUDA_LAUNCH_BLOCKING=1. \
 python ../train.py \
 --dataset_root ~/WZ/data \
 --epochs 3000 \
