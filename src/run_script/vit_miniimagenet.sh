@@ -11,6 +11,5 @@ python ../train.py \
 --num_query_val 15 \
 --height 96 \
 --width 96 \
---weight_decay 0.001 \
 --iterations 100 \
 --cuda cuda:0
