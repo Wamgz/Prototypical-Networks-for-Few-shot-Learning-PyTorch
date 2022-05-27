@@ -1,3 +1,4 @@
+# coding=UTF-8
 python ../train.py \
 --dataset_root ~/WZ/data \
 --epochs 3000 \
