@@ -1,5 +1,4 @@
 # coding=UTF-8
-CUDA_LAUNCH_BLOCKING=1. \
 python ../train.py \
 --dataset_root ~/WZ/data \
 --epochs 3000 \
@@ -15,4 +14,4 @@ python ../train.py \
 --width 96 \
 --weight_decay 0.001 \
 --iterations 100 \
---cuda cuda:1 \
+--cuda 1 \

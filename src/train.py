@@ -24,7 +24,7 @@ from visdom import Visdom
 
 options = get_parser().parse_args()
 device = torch.device(options.cuda)
-
+os.environ['CUDA_VISIBLE_DEVICES'] = options.cuda
 
 def init_dataset(opt, mode):
     if opt.dataset_name == 'omniglotDataset':
@@ -87,7 +87,7 @@ def init_model(opt):
     Initialize the ProtoNet
     '''
     if opt.model_name == 'cnn':
-        return ProtoNet(x_dim=opt.channel).to(device)
+        return ProtoNet(x_dim=opt.channel).cuda()
     elif opt.model_name == 'vit':
         return ViT(
             image_size=96,
@@ -102,7 +102,7 @@ def init_model(opt):
             emb_dropout=0.1,
             use_avg_pool_out=True,
             channels=3
-        ).to(device)
+        ).cuda()
     elif opt.model_name == 'vit_small':
         return ViT_small(
             image_size=128,
@@ -116,7 +116,7 @@ def init_model(opt):
             dropout=0.1,
             emb_dropout=0.1,
             channels=3
-        ).to(device)
+        ).cuda()
 
     raise ValueError('Unsupported model_name {}'.format(opt.model_name))
 
@@ -175,7 +175,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         for batch in tqdm(tr_iter):
             optim.zero_grad()
             x, y = batch  # x: (batch, C, H, W), y:(batch, )
-            x, y = x.to(device), y.to(device)
+            x, y = x.cuda(), y.cuda()
             model_output = model(x)  # (batch, flatten后的维度 * z_dim)
             loss, acc = loss_fn(model_output, target=y,
                                 n_support=opt.num_support_tr,
@@ -198,7 +198,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         with torch.no_grad():
             for batch in val_iter:
                 x, y = batch
-                x, y = x.to(device), y.to(device)
+                x, y = x.cuda(), y.cuda()
                 model_output = model(x)
                 loss, acc = loss_fn(model_output, target=y,
                                     n_support=opt.num_support_val,
@@ -237,7 +237,7 @@ def test(opt, test_dataloader, model):
         test_iter = iter(test_dataloader)
         for batch in test_iter:
             x, y = batch
-            x, y = x.to(device), y.to(device)
+            x, y = x.cuda(), y.cuda()
             model_output = model(x)
             _, acc = loss_fn(model_output, target=y,
                              n_support=opt.num_support_val,
