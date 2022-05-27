@@ -78,7 +78,7 @@ def init_dataloader(opt, mode):
     }
     dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler, **dataloader_params)
     if torch.cuda.is_available():
-        dataloader = DataFetcher(dataloader)
+        dataloader = DataFetcher(dataloader, device=device)
     return dataloader
 
 
