@@ -1,4 +1,6 @@
 # coding=UTF-8
+os.environ['CUDA_VISIBLE_DEVICES'] = '2' \
+
 python ../train.py \
 --dataset_root ~/WZ/data \
 --epochs 3000 \

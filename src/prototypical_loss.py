@@ -5,8 +5,6 @@ from torch.nn.modules import Module
 from src.utils.parser_util import get_parser
 options = get_parser().parse_args()
 
-device = torch.device("cuda:" + options.cuda if torch.cuda.is_available() and len(options.cuda) > 0 else "cpu")
-
 class PrototypicalLoss(Module):
     '''
     Loss class deriving from Module for the prototypical loss function defined below
@@ -78,7 +76,7 @@ def prototypical_loss(input, target, n_support, n_query):
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
 
-    target_inds = torch.arange(0, n_classes).to(device)
+    target_inds = torch.arange(0, n_classes).cuda()
     target_inds = target_inds.view(n_classes, 1, 1)
     target_inds = target_inds.expand(n_classes, n_query, 1).long()
 

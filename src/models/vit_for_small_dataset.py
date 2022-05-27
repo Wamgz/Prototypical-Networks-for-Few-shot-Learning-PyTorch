@@ -57,7 +57,7 @@ class LSA(nn.Module):
 
         dots = torch.matmul(q, k.transpose(-1, -2)) * self.temperature.exp()
         ##和vit不同的地方 2、加了一个mask
-        mask = torch.eye(dots.shape[-1], device = dots.device, dtype = torch.bool)
+        mask = torch.eye(dots.shape[-1], dtype = torch.bool)
         mask_value = -torch.finfo(dots.dtype).max
         dots = dots.masked_fill(mask, mask_value)
 
