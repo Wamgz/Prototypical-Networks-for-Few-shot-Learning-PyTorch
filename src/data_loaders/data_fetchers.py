@@ -1,9 +1,9 @@
 import torch
 ## 提前取数据加速训练速度
 class DataFetcher:
-    def __init__(self, torch_loader):
+    def __init__(self, torch_loader, device):
         self.torch_loader = torch_loader
-
+        self.device = device
     def __len__(self):
         return len(self.torch_loader)
 
@@ -22,8 +22,8 @@ class DataFetcher:
             return
 
         with torch.cuda.stream(self.stream):
-            self.next_input = self.next_input.cuda(non_blocking=True)
-            self.next_label = self.next_label.cuda(non_blocking=True)
+            self.next_input = self.next_input.to(self.device, non_blocking=True)
+            self.next_label = self.next_label.to(self.device, non_blocking=True)
 
     def __next__(self):
         torch.cuda.current_stream().wait_stream(self.stream)

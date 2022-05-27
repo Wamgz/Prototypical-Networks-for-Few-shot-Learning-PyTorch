@@ -108,6 +108,6 @@ def get_parser():
     parser.add_argument('--cuda',
                         type=str,
                         help='use gpu or cpu',
-                        default='cpu')
+                        default='')
 
     return parser
