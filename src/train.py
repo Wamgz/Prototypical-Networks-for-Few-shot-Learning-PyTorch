@@ -97,8 +97,8 @@ def init_model(opt):
             heads=16,
             dim_head=8,
             mlp_dim=64,
-            tsfm_dropout=0.1,
-            emb_dropout=0.1,
+            tsfm_dropout=0.3,
+            emb_dropout=0.3,
             use_avg_pool_out=True,
             channels=3
         ).cuda()
