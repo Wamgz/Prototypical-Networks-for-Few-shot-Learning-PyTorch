@@ -13,4 +13,5 @@ python ../train.py \
 --height 64 \
 --width 64 \
 --iterations 100 \
+--learning_rate 0.00001 \
 --cuda 0
