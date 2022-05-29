@@ -591,6 +591,7 @@ class SwinTransformer(nn.Module):
 
 
 if __name__ == '__main__':
-    img = torch.randn((10, 3, 84, 84))
-    model = SwinTransformer()
+    img = torch.randn((10, 3, 108, 108))
+
+    model = SwinTransformer(img_size=108, window_size=3)
     print(model(img).shape)

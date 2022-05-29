@@ -10,7 +10,7 @@ python ../train.py \
 --classes_per_it_val 16 \
 --num_support_val 5 \
 --num_query_val 15 \
---height 224 \
---width 224 \
+--height 128 \
+--width 128 \
 --iterations 100 \
 --cuda 0
