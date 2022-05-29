@@ -118,7 +118,7 @@ def init_model(opt):
             channels=3
         ).cuda()
     elif opt.model_name == 'swin_transformer':
-        return SwinTransformer(img_size=opt.height, window_size=4, only_feature=True).cuda()
+        return SwinTransformer(img_size=opt.height, window_size=4, drop_rate=0.1, attn_drop_rate=0.1, only_feature=True).cuda()
 
     raise ValueError('Unsupported model_name {}'.format(opt.model_name))
 
