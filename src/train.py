@@ -15,6 +15,7 @@ import torch
 from src.utils.logger_utils import logger
 from src.models.vit import ViT
 from src.models.vit_for_small_dataset import ViT_small
+from src.models.swin_transformer import SwinTransformer
 from data_loaders.data_fetchers import DataFetcher
 from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
 from torch.utils.tensorboard import SummaryWriter
@@ -116,6 +117,8 @@ def init_model(opt):
             emb_dropout=0.1,
             channels=3
         ).cuda()
+    elif opt.model_name == 'swin_transformer':
+        return SwinTransformer.cuda()
 
     raise ValueError('Unsupported model_name {}'.format(opt.model_name))
 

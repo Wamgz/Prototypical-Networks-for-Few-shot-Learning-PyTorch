@@ -41,7 +41,7 @@ class FeedForward(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, embed_dim, heads=8, dim_head=64, dropout=0.):
+    def __init__(self, embed_dim, num_patch, heads=8, dim_head=64, dropout=0., use_group_conv=False):
         super().__init__()
         inner_dim = dim_head * heads # 1024  TODO，innerdim和dim有什么区别
         project_out = not (heads == 1 and dim_head == embed_dim)
@@ -59,7 +59,32 @@ class Attention(nn.Module):
             nn.Dropout(dropout)
         ) if project_out else nn.Identity()
 
+        self.group_conv = nn.Conv1d(self.num_patch * self.heads,
+                                     self.num_patch * self.heads,
+                                     kernel_size=1,
+                                     groups=self.num_heads)
+
     def forward(self, x):
+        if self.use_group_conv:
+            batch, num_patch, embed_num = x.shape
+            assert embed_num % self.heads == 0, "group conv: num heads or input shape is wrong!"
+            x = x.view(batch, num_patch, self.heads, embed_num / self.heads).transponse(1, 2)
+            x = x.view(-1, num_patch * self.heads, embed_num / self.heads) # (batch, heads * num_patch, embed_num / self.heads)
+            x = self.group_conv(x) # (batch, num_patch * heads, embed_num / self.heads)
+            x = x.view(-1, self.heads, num_patch, embed_num / self.heads).transpose(1, 2) # (batch, num_patch, heads, embed_num / self.heads)
+            x = x.view(-1, num_patch, embed_num)
+        # x_windows = window_partition(shifted_x, self.window_size)  # (batch * num_windows * num_windows, window_size, window_size, embeddim)
+        # x_windows = x_windows.view(-1, self.window_size * self.window_size, C)  # (batch * num_windows * num_windows, window_size * window_size, embeddim) -> (64, 49, 96)
+        #
+        # # Window/Shifted-Window Spatial MLP
+        # x_windows_heads = x_windows.view(-1, self.window_size * self.window_size, self.num_heads, C // self.num_heads) # (batch * num_windows * num_windows, window_size * window_size, num_head, embeddim // num_head) ->(batch * 64, 49, 3, 32)
+        # x_windows_heads = x_windows_heads.transpose(1, 2)  # (num_windows * num_windows, num_head, window_size * window_size, embeddim / num_head) -> (64, 3, 49, 32)
+        # x_windows_heads = x_windows_heads.reshape(-1, self.num_heads * self.window_size * self.window_size,
+        #                                           C // self.num_heads) # (batch * num_windows * num_windows, num_head * window_size * window_size, embeddim / num_head) -> (64, 3 * 49, 32)
+        # spatial_mlp_windows = self.spatial_mlp(x_windows_heads)  # (num_windows * num_windows, num_head * window_size * window_size, embeddim / num_head) —> (64， 3 * 49，32)
+        # spatial_mlp_windows = spatial_mlp_windows.view(-1, self.num_heads, self.window_size * self.window_size,
+        #                                                C // self.num_heads).transpose(1, 2) # (num_windows * num_windows, num_head, window_size * window_size, embeddim / num_head) -> (num_windows * num_windows, window_size * window_size，num_head, embeddim / num_head)
+        # spatial_mlp_windows = spatial_mlp_windows.reshape(-1, self.window_size * self.window_size, C)
         qkv = self.to_qkv(x).chunk(3, dim=-1) # tuple: ((600, 65, 1024), (600, 65, 1024), (600, 65, 1024))
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # (600, 16, 65, 64)
 
@@ -244,5 +269,6 @@ if __name__ == '__main__':
 
     x = torch.randn((400, 3, 96, 96))
     print(model(x).shape)
-
+    import os
+    os.path.join()
     num_param = get_parameter_number(model)
