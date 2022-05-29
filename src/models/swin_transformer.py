@@ -586,6 +586,9 @@ class SwinTransformer(nn.Module):
         flops += self.num_features * self.num_classes
         return flops
 
+    def trainable_params(self):
+        return self.parameters()
+
 
 if __name__ == '__main__':
     img = torch.randn((10, 3, 84, 84))
