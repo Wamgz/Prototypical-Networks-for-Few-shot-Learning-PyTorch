@@ -14,4 +14,5 @@ python ../train.py \
 --width 64 \
 --iterations 100 \
 --learning_rate 0.00005 \
+--dist cosine \
 --cuda 3
