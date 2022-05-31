@@ -178,8 +178,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             optim.zero_grad()
             x, y = batch  # x: (batch, C, H, W), y:(batch, )
             x, y = x.cuda(), y.cuda()
-            model_output = model(x)  # (batch, flatten后的维度 * z_dim)
-            loss, acc = loss_fn(model_output, target=y,
+            model_output = model(x)  # (batch, H * W * z_dim)
+            loss, acc = loss_fn(model_output, labels=y,
                                 n_support=opt.num_support_tr,
                                 n_query=opt.num_query_tr)
             loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
@@ -202,7 +202,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                 x, y = batch
                 x, y = x.cuda(), y.cuda()
                 model_output = model(x)
-                loss, acc = loss_fn(model_output, target=y,
+                loss, acc = loss_fn(model_output, labels=y,
                                     n_support=opt.num_support_val,
                                     n_query=opt.num_query_val)
                 val_loss.append(loss.detach())
@@ -241,7 +241,7 @@ def test(opt, test_dataloader, model):
             x, y = batch
             x, y = x.cuda(), y.cuda()
             model_output = model(x)
-            _, acc = loss_fn(model_output, target=y,
+            _, acc = loss_fn(model_output, labels=y,
                              n_support=opt.num_support_val,
                              n_query=opt.num_query_val)
             avg_acc.append(acc.detach())

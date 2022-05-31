@@ -28,8 +28,8 @@ class ProtoNet(nn.Module):
         )
 
     def forward(self, x):
-        x = self.encoder(x)
-        return x.view(x.size(0), -1)
+        x = self.encoder(x) # (batch(class_per_episode * (num_support + num_query)), H, W, C) -> (60 * (5 + 5), 28, 28, 3)
+        return x.view(x.size(0), -1) # (batch, H * W * z_dim) -> (600, 28 * 28 * 64)
 
     def trainable_params(self):
         return self.parameters()

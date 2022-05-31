@@ -32,7 +32,10 @@ def get_parser():
                         type=int,
                         help='image resized width',
                         default=3)
-
+    parser.add_argument('-dist', '--dist',
+                        type=str,
+                        help='which dist loss to use',
+                        default='euclidean')
     parser.add_argument('-exp', '--experiment_root',
                         type=str,
                         help='root where to store models, losses and accuracies',

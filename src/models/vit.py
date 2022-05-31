@@ -46,6 +46,7 @@ class Attention(nn.Module):
         inner_dim = dim_head * heads # 1024  TODO，innerdim和dim有什么区别
         project_out = not (heads == 1 and dim_head == embed_dim)
 
+        self.use_group_conv = use_group_conv
         self.heads = heads
         self.scale = dim_head ** -0.5
 
@@ -73,18 +74,7 @@ class Attention(nn.Module):
             x = self.group_conv(x) # (batch, num_patch * heads, embed_num / self.heads)
             x = x.view(-1, self.heads, num_patch, embed_num / self.heads).transpose(1, 2) # (batch, num_patch, heads, embed_num / self.heads)
             x = x.view(-1, num_patch, embed_num)
-        # x_windows = window_partition(shifted_x, self.window_size)  # (batch * num_windows * num_windows, window_size, window_size, embeddim)
-        # x_windows = x_windows.view(-1, self.window_size * self.window_size, C)  # (batch * num_windows * num_windows, window_size * window_size, embeddim) -> (64, 49, 96)
-        #
-        # # Window/Shifted-Window Spatial MLP
-        # x_windows_heads = x_windows.view(-1, self.window_size * self.window_size, self.num_heads, C // self.num_heads) # (batch * num_windows * num_windows, window_size * window_size, num_head, embeddim // num_head) ->(batch * 64, 49, 3, 32)
-        # x_windows_heads = x_windows_heads.transpose(1, 2)  # (num_windows * num_windows, num_head, window_size * window_size, embeddim / num_head) -> (64, 3, 49, 32)
-        # x_windows_heads = x_windows_heads.reshape(-1, self.num_heads * self.window_size * self.window_size,
-        #                                           C // self.num_heads) # (batch * num_windows * num_windows, num_head * window_size * window_size, embeddim / num_head) -> (64, 3 * 49, 32)
-        # spatial_mlp_windows = self.spatial_mlp(x_windows_heads)  # (num_windows * num_windows, num_head * window_size * window_size, embeddim / num_head) —> (64， 3 * 49，32)
-        # spatial_mlp_windows = spatial_mlp_windows.view(-1, self.num_heads, self.window_size * self.window_size,
-        #                                                C // self.num_heads).transpose(1, 2) # (num_windows * num_windows, num_head, window_size * window_size, embeddim / num_head) -> (num_windows * num_windows, window_size * window_size，num_head, embeddim / num_head)
-        # spatial_mlp_windows = spatial_mlp_windows.reshape(-1, self.window_size * self.window_size, C)
+            ## TODO 还没有写完，确定是否需要softmax之类的操作
         qkv = self.to_qkv(x).chunk(3, dim=-1) # tuple: ((600, 65, 1024), (600, 65, 1024), (600, 65, 1024))
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # (600, 16, 65, 64)
 
@@ -153,6 +143,23 @@ class PatchEmbed(nn.Module):
             x = self.norm(x)
         return x
 
+class Mlp(nn.Module):
+    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
+        super().__init__()
+        out_features = out_features or in_features
+        hidden_features = hidden_features or in_features
+        self.fc1 = nn.Linear(in_features, hidden_features)
+        self.act = act_layer()
+        self.fc2 = nn.Linear(hidden_features, out_features)
+        self.drop = nn.Dropout(drop)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.act(x)
+        x = self.drop(x)
+        x = self.fc2(x)
+        x = self.drop(x)
+        return x
 
 class ViT(nn.Module):
     def __init__(self, *, image_size, patch_size, out_dim, embed_dim, depth, heads, mlp_dim, pool='cls', channels=1,

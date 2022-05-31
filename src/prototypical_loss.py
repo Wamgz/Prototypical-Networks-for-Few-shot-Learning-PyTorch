@@ -16,8 +16,7 @@ class PrototypicalLoss(Module):
     def forward(self, input, target):
         return prototypical_loss(input, target, self.n_support)
 
-
-def euclidean_dist(x, y):
+def dist(x, y, type='euclidean'):
     '''
     Compute euclidean distance between two tensors
     x: query_samples: (300, 64)
@@ -25,19 +24,21 @@ def euclidean_dist(x, y):
     '''
     # x: N x D
     # y: M x D
-    n = x.size(0) # 300
-    m = y.size(0) # 60
-    d = x.size(1) # 64
+    n = x.size(0) # (class_per_episode * num_query)
+    m = y.size(0) # (class_per_episode)
+    d = x.size(1) # (embed_dim)
     if d != y.size(1):
         raise Exception
 
     x = x.unsqueeze(1).expand(n, m, d) # (300, 60, 64)
     y = y.unsqueeze(0).expand(n, m, d) # (300, 60, 64)
+    if type == 'euclidean':
+        return torch.pow(x - y, 2).sum(2)
+    elif type == 'cosine':
+        return F.cosine_similarity(x, y).sum(2)
 
-    return torch.pow(x - y, 2).sum(2)
 
-
-def prototypical_loss(input, target, n_support, n_query):
+def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean'):
     '''
     Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
 
@@ -48,17 +49,17 @@ def prototypical_loss(input, target, n_support, n_query):
     classes, of appartaining to a class c, loss and accuracy are then computed
     and returned
     Args:
-    - input: the model output for a batch of samples
-    - target: ground truth for the above batch of samples
+    - input: the model output for a batch of samples (batch, H * W * z_dim)
+    - target: ground truth for the above batch of samples (batch, )
     - n_support: number of samples to keep in account when computing
       barycentres, for each one of the current classes
     '''
     def supp_idxs(c):
         # 从每个classes里取n_support（5）个input的索引出来，去input里取对应label的数据
-        return target.eq(c).nonzero()[:n_support].squeeze(1)
+        return labels.eq(c).nonzero()[:n_support].squeeze(1)
 
     # FIXME when torch.unique will be available on cuda too
-    classes = torch.unique(target) # (opt.classes_per_it_tr, ) 上面的600是在60个class中取10个sample出来
+    classes = torch.unique(labels) # (classes_per_it_tr, ) -> 600上面的600是在60个class中取10个sample出来
     n_classes = len(classes)
     # FIXME when torch will support where as np
     # 上面的dataset实际上模拟了一个episode(从整个train set取出的一个subset)，下面的support set和query set就是在这个episode中随机取一部分，loss计算也是计算query
@@ -67,12 +68,12 @@ def prototypical_loss(input, target, n_support, n_query):
     # support的每个类取前n_support个, [tensor[0, 1, 2, 3, 4], tensor(5, 6, 10, 11, 12), ····]
     support_idxs = list(map(supp_idxs, classes)) #list: (opt.classes_per_it_tr, opt.num_support_tr), format: [tensor([ 67, 142, 257, 303, 420]), tensor([  7, 193, 307, 325, 350]), ····]
 
-    prototypes = torch.stack([input[idx_list].mean(0) for idx_list in support_idxs]) # (batch, h' * w' * c')
+    prototypes = torch.stack([model_outputs[idx_list].mean(0) for idx_list in support_idxs]) # (batch, h' * w' * c')
     # FIXME when torch will support where as np
-    query_idxs = torch.stack(list(map(lambda c: target.eq(c).nonzero()[n_support:], classes))).view(-1) # (n_classes * n_query)
+    query_idxs = torch.stack(list(map(lambda c: labels.eq(c).nonzero()[n_support:], classes))).view(-1) # (n_classes * n_query)
 
-    query_samples = input[query_idxs]
-    dists = euclidean_dist(query_samples, prototypes)
+    query_samples = model_outputs[query_idxs]
+    dists = dist(query_samples, prototypes)
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
 

@@ -55,7 +55,7 @@ class PrototypicalBatchSampler(object):
             batch_size = spc * cpi
             batch = torch.LongTensor(batch_size)
             c_idxs = torch.randperm(len(self.classes))[:cpi]
-            for i, c in enumerate(self.classes[c_idxs]): #每次从所有的class中取60个class出来
+            for i, c in enumerate(self.classes[c_idxs]): # 每次从所有的class中取60个class出来
                 s = slice(i * spc, (i + 1) * spc)
                 # FIXME when torch.argwhere will exists
                 # 先取一个label
