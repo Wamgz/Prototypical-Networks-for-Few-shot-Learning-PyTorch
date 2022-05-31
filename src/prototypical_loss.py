@@ -36,7 +36,7 @@ def dist_loss(x, y, type='euclidean'):
         return torch.pow(x - y, 2).sum(2)
     elif type == 'cosine':
         scale = 100
-        return scale * (1 - F.cosine_similarity(x, y, -1).sum(2))
+        return scale * (1 - F.cosine_similarity(x, y, -1))
 
 
 def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean'):
