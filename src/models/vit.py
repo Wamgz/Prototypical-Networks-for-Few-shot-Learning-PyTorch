@@ -41,7 +41,7 @@ class FeedForward(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, embed_dim, num_patch, heads=8, dim_head=64, dropout=0., use_group_conv=False):
+    def __init__(self, embed_dim, heads=8, dim_head=64, dropout=0., use_group_conv=False):
         super().__init__()
         inner_dim = dim_head * heads # 1024  TODO，innerdim和dim有什么区别
         project_out = not (heads == 1 and dim_head == embed_dim)
