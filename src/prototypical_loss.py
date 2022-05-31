@@ -16,7 +16,7 @@ class PrototypicalLoss(Module):
     def forward(self, input, target):
         return prototypical_loss(input, target, self.n_support)
 
-def dist(x, y, type='euclidean'):
+def dist_loss(x, y, type='euclidean'):
     '''
     Compute euclidean distance between two tensors
     x: query_samples: (300, 64)
@@ -73,7 +73,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
     query_idxs = torch.stack(list(map(lambda c: labels.eq(c).nonzero()[n_support:], classes))).view(-1) # (n_classes * n_query)
 
     query_samples = model_outputs[query_idxs]
-    dists = dist(query_samples, prototypes)
+    dists = dist_loss(query_samples, prototypes, dist)
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
 
