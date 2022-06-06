@@ -32,14 +32,21 @@ def get_parser():
                         type=int,
                         help='image resized width',
                         default=3)
+
     parser.add_argument('-dist', '--dist',
                         type=str,
                         help='which dist loss to use',
                         default='euclidean')
+
     parser.add_argument('-exp', '--experiment_root',
                         type=str,
                         help='root where to store models, losses and accuracies',
                         default='..' + os.sep + 'output')
+
+    parser.add_argument('-opt', '--optimizer',
+                        type=str,
+                        help='which optimizer to use',
+                        default='Adam')
 
     parser.add_argument('-nep', '--epochs',
                         type=int,
@@ -55,6 +62,7 @@ def get_parser():
                         type=float,
                         help='l2 regulazation rate',
                         default=0.0)
+
     parser.add_argument('-lrS', '--lr_scheduler_step',
                         type=int,
                         help='StepLR learning rate scheduler step, default=20',

@@ -41,7 +41,7 @@ class FeedForward(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, embed_dim, heads=8, dim_head=64, dropout=0., use_group_conv=False):
+    def __init__(self, embed_dim, num_patch, heads=8, dim_head=64, dropout=0., use_group_conv=False):
         super().__init__()
         inner_dim = dim_head * heads # 1024  TODO，innerdim和dim有什么区别
         project_out = not (heads == 1 and dim_head == embed_dim)
@@ -59,11 +59,11 @@ class Attention(nn.Module):
             nn.Linear(inner_dim, embed_dim),
             nn.Dropout(dropout)
         ) if project_out else nn.Identity()
-
+        self.num_patch = num_patch
         self.group_conv = nn.Conv1d(self.num_patch * self.heads,
                                      self.num_patch * self.heads,
                                      kernel_size=1,
-                                     groups=self.num_heads)
+                                     groups=self.heads)
 
     def forward(self, x):
         if self.use_group_conv:
@@ -89,12 +89,12 @@ class Attention(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, embed_dim, depth, heads, dim_head, mlp_dim, dropout=0.):
+    def __init__(self, embed_dim, depth, heads, dim_head, mlp_dim, num_patch, dropout=0.):
         super().__init__()
         self.layers = nn.ModuleList([])
         for _ in range(depth):
             self.layers.append(nn.ModuleList([ # 这里是先进行norm，再进行Attention和FFN
-                PreNorm(embed_dim, Attention(embed_dim, heads=heads, dim_head=dim_head, dropout=dropout)),
+                PreNorm(embed_dim, Attention(embed_dim, num_patch=num_patch, heads=heads, dim_head=dim_head, dropout=dropout)),
                 PreNorm(embed_dim, FeedForward(embed_dim, mlp_dim, dropout=dropout))
             ]))
 
@@ -163,7 +163,7 @@ class Mlp(nn.Module):
 
 class ViT(nn.Module):
     def __init__(self, *, image_size, patch_size, out_dim, embed_dim, depth, heads, mlp_dim, pool='cls', channels=1,
-                 dim_head=12, tsfm_dropout=0., emb_dropout=0., feature_only=False, pretrained=False, patch_norm=True, conv_patch_embedding=True,
+                 dim_head=12, tsfm_dropout=0., emb_dropout=0., feature_only=False, pretrained=False, patch_norm=True, conv_patch_embedding=False,
                  use_avg_pool_out=False):
         super().__init__()
         self.pretrained = pretrained
@@ -173,7 +173,7 @@ class ViT(nn.Module):
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
 
-        self.num_patches = (image_height // patch_height) * (image_width // patch_width) # 64
+        self.num_patch = (image_height // patch_height) * (image_width // patch_width) # 64
         patch_dim = channels * patch_height * patch_width # 3072
         assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
 
@@ -191,11 +191,11 @@ class ViT(nn.Module):
             )
 
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, self.num_patches + 1, embed_dim))
+        self.pos_embedding = nn.Parameter(torch.randn(1, self.num_patch + 1, embed_dim))
         self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
         self.dropout = nn.Dropout(emb_dropout)
         # dim: 1024, depth: 6, heads: 16, dim_head: 64, mlp_dim: 2048, dropout: 0.1
-        self.transformer = Transformer(embed_dim, depth, heads, dim_head, mlp_dim, tsfm_dropout)
+        self.transformer = Transformer(embed_dim, depth, heads, dim_head, mlp_dim, self.num_patch, tsfm_dropout)
 
         self.pool = pool
         self.to_latent = nn.Identity()
@@ -209,8 +209,8 @@ class ViT(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool1d(1) ## TODO 维度确定
 
         self.out_head = nn.Sequential(
-            nn.LayerNorm((self.num_patches + 1) * embed_dim),
-            nn.Linear((self.num_patches + 1) * embed_dim, out_dim)
+            nn.LayerNorm((self.num_patch + 1) * embed_dim),
+            nn.Linear((self.num_patch + 1) * embed_dim, out_dim)
         )
         if pretrained:
             self.pretrained_model = timm.create_model('vit_base_patch16_224', num_classes=out_dim, pretrained=True)
@@ -262,11 +262,11 @@ def get_parameter_number(model):
 if __name__ == '__main__':
     model = ViT(
         image_size=96,
-        patch_size=8,
+        patch_size=16,
         out_dim=64,
         embed_dim=64,
         depth=4,
-        heads=16,
+        heads=8,
         dim_head=8,
         mlp_dim=64,
         tsfm_dropout=0.1,
@@ -276,6 +276,4 @@ if __name__ == '__main__':
 
     x = torch.randn((400, 3, 96, 96))
     print(model(x).shape)
-    import os
-    os.path.join()
     num_param = get_parameter_number(model)

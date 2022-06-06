@@ -50,8 +50,6 @@ def _dataset_exception_handle(dataset, n_classes, mode, opt):
         raise (Exception('There are not enough classes in the data in order ' +
                          'to satisfy the chosen classes_per_it. Decrease the ' +
                          'classes_per_it_{tr/val} option and try again.'))
-
-
 # endregion
 
 def init_sampler(opt, labels, mode, dataset_name='miniImagenet'):
@@ -91,15 +89,15 @@ def init_model(opt):
     elif opt.model_name == 'vit':
         return ViT(
             image_size=96,
-            patch_size=8,
+            patch_size=16,
             out_dim=64,
             embed_dim=64,
             depth=4,
-            heads=16,
+            heads=8,
             dim_head=8,
             mlp_dim=64,
-            tsfm_dropout=0.3,
-            emb_dropout=0.3,
+            tsfm_dropout=0.2,
+            emb_dropout=0.2,
             use_avg_pool_out=True,
             channels=3
         ).cuda()
@@ -127,9 +125,14 @@ def init_optim(opt, model):
     '''
     Initialize optimizer
     '''
-    return torch.optim.Adam(params=model.trainable_params(),
+    if opt.optimizer == 'Adam':
+        return torch.optim.Adam(params=model.trainable_params(),
                             lr=opt.learning_rate,
                             weight_decay=opt.weight_decay)
+    elif opt.optimizer == 'SGD':
+        return torch.optim.SGD(params=model.trainable_params(),
+                               lr=opt.learning_rate,
+                               weight_decay=opt.weight_decay)
 
 
 def init_lr_scheduler(opt, optim):
@@ -171,7 +174,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     val_loss_pane, val_acc_pane = new_pane(env, 'val-loss'), new_pane(env, 'val_acc')
 
     for epoch in range(opt.epochs):
-        logger.info('=== Epoch: {} ==='.format(epoch))
+        logger.info('=== Epoch: {}, Learning Rate : {} === '.format(epoch, optim.state_dict()['param_groups'][0]['lr']))
         tr_iter = iter(tr_dataloader)
         model.train()
         for batch in tqdm(tr_iter):
