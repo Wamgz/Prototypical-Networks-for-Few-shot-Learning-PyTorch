@@ -205,7 +205,7 @@ class ViT(nn.Module):
             nn.Linear(embed_dim, out_dim)
         )
         self.use_avg_pool_out = use_avg_pool_out
-        self.norm = nn.LayerNorm(patch_height * patch_width) ## TODO 维度确定
+        self.norm = nn.LayerNorm(embed_dim) ## TODO 维度确定
         self.avg_pool = nn.AdaptiveAvgPool1d(1) ## TODO 维度确定
 
         self.out_head = nn.Sequential(
@@ -271,6 +271,7 @@ if __name__ == '__main__':
         mlp_dim=64,
         tsfm_dropout=0.1,
         emb_dropout=0.1,
+        use_avg_pool_out=True,
         channels=3
     )
 
