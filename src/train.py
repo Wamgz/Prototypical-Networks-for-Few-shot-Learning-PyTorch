@@ -25,7 +25,6 @@ from visdom import Visdom
 
 options = get_parser().parse_args()
 os.environ['CUDA_VISIBLE_DEVICES'] = options.cuda
-print('cuda device', os.environ['CUDA_VISIBLE_DEVICES'])
 def init_dataset(opt, mode):
     if opt.dataset_name == 'omniglotDataset':
         dataset = OmniglotDataset(mode=mode, root=opt.dataset_root)

@@ -16,7 +16,7 @@ def get_parser():
     parser.add_argument('-model', '--model_name',
                         type=str,
                         help='which dataset to use',
-                        default='cnn')
+                        default='vit')
 
     parser.add_argument('-height', '--height',
                         type=int,
@@ -119,6 +119,6 @@ def get_parser():
     parser.add_argument('--cuda',
                         type=str,
                         help='use gpu or cpu',
-                        default='')
+                        default='-1')
 
     return parser
