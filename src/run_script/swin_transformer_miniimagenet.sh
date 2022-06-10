@@ -15,4 +15,4 @@ python ../train.py \
 --iterations 100 \
 --learning_rate 0.00005 \
 --dist cosine \
---cuda 3
+--cuda 0
