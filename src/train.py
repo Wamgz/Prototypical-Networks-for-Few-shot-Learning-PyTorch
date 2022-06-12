@@ -130,8 +130,7 @@ def init_optim(opt, model):
                             weight_decay=opt.weight_decay)
     elif opt.optimizer == 'SGD':
         return torch.optim.SGD(params=model.trainable_params(),
-                               lr=opt.learning_rate,
-                               weight_decay=opt.weight_decay)
+                               lr=opt.learning_rate)
 
 
 def init_lr_scheduler(opt, optim):
