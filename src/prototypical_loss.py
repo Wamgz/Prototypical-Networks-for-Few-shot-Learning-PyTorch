@@ -61,6 +61,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
         # 从每个classes里取n_support（5）个input的索引出来，去input里取对应label的数据
         return labels.eq(c).nonzero()[:n_support].squeeze(1)
     logger.info('model_outputs: {}'.format(model_outputs))
+    logger.info('labels: {}'.format(labels))
 
     # FIXME when torch.unique will be available on cuda too
     classes = torch.unique(labels) # (classes_per_it_tr, ) -> 600上面的600是在60个class中取10个sample出来
