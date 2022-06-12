@@ -212,6 +212,7 @@ class ViT(nn.Module):
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
         b, n, _ = x.shape
+        logger.info('to_patch_embedding: {}'.format(x))
 
         cls_tokens = repeat(self.cls_token, '1 n d -> b n d', b=b) # (batch, 1, patch_size * patch_size) -> (600, 1, 1024)
         x = torch.cat((cls_tokens, x), dim=1) # (batch, num_patch + 1, patch_size * patch_size) ->（600, 65, 1024）
@@ -219,6 +220,8 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
+        logger.info('transformer: {}'.format(x))
+
         if self.use_avg_pool_out:
             x = self.norm(x)
             x = self.avg_pool(x)  # B C 1
@@ -226,9 +229,7 @@ class ViT(nn.Module):
             return x
         else:
             x = x.view(b, -1)
-            logger.info('x: {}'.format(x))
             out = self.out_head(x)
-            logger.info('out {}'.format(out))
             return out
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] # 一张图片的所有patch取了平均值 (batch, patch_size * patch_size)
         #
