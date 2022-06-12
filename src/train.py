@@ -180,7 +180,6 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             optim.zero_grad()
             x, y = batch  # x: (batch, C, H, W), y:(batch, )
             x, y = x.cuda(), y.cuda()
-            logger.info('x: {}'.format(x))
             model_output = model(x)  # (batch, H * W * z_dim)
             loss, acc = loss_fn(model_output, labels=y,
                                 n_support=opt.num_support_tr,
