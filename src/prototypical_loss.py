@@ -60,8 +60,6 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
     def supp_idxs(c):
         # 从每个classes里取n_support（5）个input的索引出来，去input里取对应label的数据
         return labels.eq(c).nonzero()[:n_support].squeeze(1)
-    logger.info('model_outputs: {}'.format(model_outputs))
-    logger.info('labels: {}'.format(labels))
 
     # FIXME when torch.unique will be available on cuda too
     classes = torch.unique(labels) # (classes_per_it_tr, ) -> 600上面的600是在60个class中取10个sample出来
@@ -74,6 +72,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
     support_idxs = list(map(supp_idxs, classes)) #list: (opt.classes_per_it_tr, opt.num_support_tr), format: [tensor([ 67, 142, 257, 303, 420]), tensor([  7, 193, 307, 325, 350]), ····]
 
     prototypes = torch.stack([model_outputs[idx_list].mean(0) for idx_list in support_idxs]) # (batch, h' * w' * c')
+
     # FIXME when torch will support where as np
     query_idxs = torch.stack(list(map(lambda c: labels.eq(c).nonzero()[n_support:], classes))).view(-1) # (n_classes * n_query)
 

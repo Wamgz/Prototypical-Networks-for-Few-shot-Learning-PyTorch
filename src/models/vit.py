@@ -5,6 +5,7 @@ from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 import timm
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from src.utils.logger_utils import logger
 
 
 # helpers
@@ -262,5 +263,5 @@ if __name__ == '__main__':
         )
 
     x = torch.randn((400, 3, 96, 96))
-    print(model(x).shape)
+    print(x)
     num_param = get_parameter_number(model)
