@@ -10,8 +10,8 @@ python ../train.py \
 --classes_per_it_val 16 \
 --num_support_val 5 \
 --num_query_val 15 \
---height 64 \
---width 64 \
+--height 96 \
+--width 96 \
 --iterations 100 \
 --learning_rate 0.1 \
 --optimizer SGD \

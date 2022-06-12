@@ -78,7 +78,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
 
-    target_inds = torch.arange(0, n_classes).cuda()
+    target_inds = torch.arange(0, n_classes).cpu()
     target_inds = target_inds.view(n_classes, 1, 1)
     target_inds = target_inds.expand(n_classes, n_query, 1).long()
 
