@@ -76,7 +76,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
     query_samples = model_outputs[query_idxs]
     dists = dist_loss(query_samples, prototypes, dist)
 
-    log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
+    log_p_y = F.log_softmax(dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
 
     target_inds = torch.arange(0, n_classes).cuda()
     target_inds = target_inds.view(n_classes, 1, 1)
@@ -84,7 +84,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
 
     # TODO 关键难以理解的地方：由于在sample的时候就是按照label取的，[0, 10)是第一个label，[10, 20)是第二个label，而计算loss的时候需要对应上，也就是第一个label的数据只需要保留和第一个prototype的距离
     # TODO 同样第二个label的数据只需要保留和第二个prototype的数据
-    loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
+    loss_val = log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
     _, y_hat = log_p_y.max(2)
     acc_val = y_hat.eq(target_inds.squeeze(2)).float().mean()
 

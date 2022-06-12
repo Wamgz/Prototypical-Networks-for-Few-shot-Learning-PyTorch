@@ -41,12 +41,11 @@ class FeedForward(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, embed_dim, num_patch, heads=8, dim_head=64, dropout=0., use_group_conv=False):
+    def __init__(self, embed_dim, num_patch, heads=8, dim_head=64, dropout=0.):
         super().__init__()
         inner_dim = dim_head * heads # 1024  TODO，innerdim和dim有什么区别
         project_out = not (heads == 1 and dim_head == embed_dim)
 
-        self.use_group_conv = use_group_conv
         self.heads = heads
         self.scale = dim_head ** -0.5
 
@@ -60,21 +59,8 @@ class Attention(nn.Module):
             nn.Dropout(dropout)
         ) if project_out else nn.Identity()
         self.num_patch = num_patch
-        self.group_conv = nn.Conv1d(self.num_patch * self.heads,
-                                     self.num_patch * self.heads,
-                                     kernel_size=1,
-                                     groups=self.heads)
 
     def forward(self, x):
-        if self.use_group_conv:
-            batch, num_patch, embed_num = x.shape
-            assert embed_num % self.heads == 0, "group conv: num heads or input shape is wrong!"
-            x = x.view(batch, num_patch, self.heads, embed_num / self.heads).transponse(1, 2)
-            x = x.view(-1, num_patch * self.heads, embed_num / self.heads) # (batch, heads * num_patch, embed_num / self.heads)
-            x = self.group_conv(x) # (batch, num_patch * heads, embed_num / self.heads)
-            x = x.view(-1, self.heads, num_patch, embed_num / self.heads).transpose(1, 2) # (batch, num_patch, heads, embed_num / self.heads)
-            x = x.view(-1, num_patch, embed_num)
-            ## TODO 还没有写完，确定是否需要softmax之类的操作
         qkv = self.to_qkv(x).chunk(3, dim=-1) # tuple: ((600, 65, 1024), (600, 65, 1024), (600, 65, 1024))
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # (600, 16, 65, 64)
 
