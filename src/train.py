@@ -84,7 +84,7 @@ def init_model(opt):
     Initialize the ProtoNet
     '''
     if opt.model_name == 'cnn':
-        return ProtoNet(x_dim=opt.channel).cpu()
+        return ProtoNet(x_dim=opt.channel).cuda()
     elif opt.model_name == 'vit':
         return ViT(
             image_size=96,
@@ -99,7 +99,7 @@ def init_model(opt):
             emb_dropout=0.1,
             use_avg_pool_out=False,
             channels=3
-        ).cpu()
+        ).cuda()
     elif opt.model_name == 'vit_small':
         return ViT_small(
             image_size=128,
@@ -113,9 +113,9 @@ def init_model(opt):
             dropout=0.1,
             emb_dropout=0.1,
             channels=3
-        ).cpu()
+        ).cuda()
     elif opt.model_name == 'swin_transformer':
-        return SwinTransformer(img_size=opt.height, window_size=4, drop_rate=0.1, attn_drop_rate=0.1, only_feature=True).cpu()
+        return SwinTransformer(img_size=opt.height, window_size=4, drop_rate=0.1, attn_drop_rate=0.1, only_feature=True).cuda()
 
     raise ValueError('Unsupported model_name {}'.format(opt.model_name))
 
@@ -179,7 +179,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         for batch in tqdm(tr_iter):
             optim.zero_grad()
             x, y = batch  # x: (batch, C, H, W), y:(batch, )
-            x, y = x.cpu(), y.cpu()
+            x, y = x.cuda(), y.cuda()
             model_output = model(x)  # (batch, H * W * z_dim)
             loss, acc = loss_fn(model_output, labels=y,
                                 n_support=opt.num_support_tr,
@@ -203,7 +203,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         with torch.no_grad():
             for batch in val_iter:
                 x, y = batch
-                x, y = x.cpu(), y.cpu()
+                x, y = x.cuda(), y.cuda()
                 model_output = model(x)
                 loss, acc = loss_fn(model_output, labels=y,
                                     n_support=opt.num_support_val,
@@ -242,7 +242,7 @@ def test(opt, test_dataloader, model):
         test_iter = iter(test_dataloader)
         for batch in test_iter:
             x, y = batch
-            x, y = x.cpu(), y.cpu()
+            x, y = x.cuda(), y.cuda()
             model_output = model(x)
             _, acc = loss_fn(model_output, labels=y,
                              n_support=opt.num_support_val,
