@@ -36,7 +36,7 @@ class MiniImageNet(data.Dataset):
                 tsfm.append(transforms.Resize((self.im_height, self.im_width)))
 
             tsfm.append(transforms.ToTensor())
-            # tsfm.append(transforms.Normalize((0.4914, 0.4822, 0.4465), (0.229, 0.224, 0.225)))
+            tsfm.append(transforms.Normalize((0.4914, 0.4822, 0.4465), (0.229, 0.224, 0.225)))
             self.transform = transforms.Compose(tsfm)
 
         #1、读取pkl文件
