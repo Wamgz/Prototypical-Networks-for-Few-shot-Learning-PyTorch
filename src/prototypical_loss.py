@@ -60,6 +60,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
     def supp_idxs(c):
         # 从每个classes里取n_support（5）个input的索引出来，去input里取对应label的数据
         return labels.eq(c).nonzero()[:n_support].squeeze(1)
+    logger.info('model_outputs: {}'.format(model_outputs))
 
     # FIXME when torch.unique will be available on cuda too
     classes = torch.unique(labels) # (classes_per_it_tr, ) -> 600上面的600是在60个class中取10个sample出来
@@ -79,7 +80,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
     dists = dist_loss(query_samples, prototypes, dist)
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
-    logger.info('log_p_y: {}'.format(log_p_y))
+    # logger.info('log_p_y: {}'.format(log_p_y))
 
     target_inds = torch.arange(0, n_classes).cuda()
     target_inds = target_inds.view(n_classes, 1, 1)
@@ -89,7 +90,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
     # TODO 同样第二个label的数据只需要保留和第二个prototype的数据
     loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
     _, y_hat = log_p_y.max(2)
-    logger.info('correct idx: {}'.format(y_hat))
+    # logger.info('correct idx: {}'.format(y_hat))
     acc_val = y_hat.eq(target_inds.squeeze(2)).float().mean()
 
     return loss_val,  acc_val
