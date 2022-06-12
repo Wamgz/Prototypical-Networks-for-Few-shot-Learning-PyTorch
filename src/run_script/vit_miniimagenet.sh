@@ -13,4 +13,5 @@ python ../train.py \
 --height 96 \
 --width 96 \
 --iterations 100 \
+--optimizer SGD \
 --cuda 2
