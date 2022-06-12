@@ -247,19 +247,19 @@ def get_parameter_number(model):
 
 if __name__ == '__main__':
     model = ViT(
-        image_size=96,
-        patch_size=16,
-        out_dim=64,
-        embed_dim=64,
-        depth=4,
-        heads=8,
-        dim_head=8,
-        mlp_dim=64,
-        tsfm_dropout=0.1,
-        emb_dropout=0.1,
-        use_avg_pool_out=True,
-        channels=3
-    )
+            image_size=96,
+            patch_size=16,
+            out_dim=64,
+            embed_dim=64,
+            depth=4,
+            heads=8,
+            dim_head=8,
+            mlp_dim=64,
+            tsfm_dropout=0.1,
+            emb_dropout=0.1,
+            use_avg_pool_out=False,
+            channels=3
+        )
 
     x = torch.randn((400, 3, 96, 96))
     print(model(x).shape)
