@@ -205,7 +205,7 @@ class ViT(nn.Module):
                 param.requires_grad = False
             for param in self.pretrained_model.head.parameters():
                 param.requires_grad = True
-
+        self.softmax = nn.Softmax(dim=-1)
         self.apply(self._init_weights)
 
     def forward(self, img):
@@ -232,13 +232,10 @@ class ViT(nn.Module):
             return x
         else:
             x = x.view(b, -1)
-            out = self.out_head(x)
+            out = self.softmax(self.out_head(x))
 
             return out
-        # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] # 一张图片的所有patch取了平均值 (batch, patch_size * patch_size)
-        #
-        # x = self.to_latent(x) # (batch, patch_size * patch_size)
-        # return self.mlp_head(x) # (batch, num_classes)
+
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=.02)
