@@ -231,6 +231,7 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
+        logger.info('transformer: {}'.format(x))
 
         if self.use_avg_pool_out:
             x = self.norm(x)
