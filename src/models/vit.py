@@ -227,7 +227,7 @@ class ViT(nn.Module):
         if self.use_avg_pool_out:
             logger.debug('use_avg_pool_out norm: {}'.format(x))
             x = self.avg_pool(x)  # B C 1
-            logger.info('avg_pool: {}'.format(x))
+            logger.debug('avg_pool: {}'.format(x))
             x = torch.flatten(x, 1)
             return x
         else:
