@@ -221,7 +221,10 @@ class ViT(nn.Module):
         if self.pretrained:
             return self.pretrained_model(img)
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
+        logger.info('img: {}'.format(img))
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
+        logger.info('to_patch_embedding: {}'.format(x))
+
         b, n, _ = x.shape
 
         cls_tokens = repeat(self.cls_token, '1 n d -> b n d', b=b) # (batch, 1, patch_size * patch_size) -> (600, 1, 1024)
