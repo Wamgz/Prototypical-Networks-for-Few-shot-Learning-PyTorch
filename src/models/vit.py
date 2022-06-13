@@ -59,13 +59,13 @@ class Attention(nn.Module):
             nn.Linear(inner_dim, embed_dim),
             nn.Dropout(dropout)
         ) if project_out else nn.Identity()
-        self.num_patch = num_patch
 
     def forward(self, x):
         qkv = self.to_qkv(x).chunk(3, dim=-1) # tuple: ((600, 65, 1024), (600, 65, 1024), (600, 65, 1024))
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # (600, 16, 65, 64)
 
         dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale # (batch, num_patch * num_patch, num_patch * num_patch)
+        logger.info('dots: {}'.format(dots))
 
         attn = self.attend(dots) # q和k的相似度矩阵, attn: (600, 16, 65, 65)
         attn = self.dropout(attn)
@@ -175,6 +175,7 @@ class ViT(nn.Module):
             self.to_patch_embedding = nn.Sequential(
                 Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_height, p2=patch_width),
                 nn.Linear(patch_dim, embed_dim), # patch dim: 3072, dim: 1024
+                nn.LayerNorm(embed_dim)
             )
 
 
@@ -206,13 +207,23 @@ class ViT(nn.Module):
             for param in self.pretrained_model.head.parameters():
                 param.requires_grad = True
 
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
     def forward(self, img):
         if self.pretrained:
             return self.pretrained_model(img)
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
         b, n, _ = x.shape
-        logger.info('to_patch_embedding: {}'.format(x))
 
         cls_tokens = repeat(self.cls_token, '1 n d -> b n d', b=b) # (batch, 1, patch_size * patch_size) -> (600, 1, 1024)
         x = torch.cat((cls_tokens, x), dim=1) # (batch, num_patch + 1, patch_size * patch_size) ->（600, 65, 1024）
@@ -220,7 +231,6 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
-        logger.info('transformer: {}'.format(x))
 
         if self.use_avg_pool_out:
             x = self.norm(x)
