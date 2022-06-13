@@ -13,6 +13,6 @@ python ../train.py \
 --height 96 \
 --width 96 \
 --iterations 100 \
---learning_rate 0.0001 \
+--learning_rate 0.001 \
 --optimizer SGD \
---cuda 0
+--cuda 2
