@@ -214,7 +214,7 @@ class ViT(nn.Module):
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         # logger.info('img: {}'.format(img))
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
-        logger.info('to_patch_embedding: {}'.format(x))
+        # logger.info('to_patch_embedding: {}'.format(x))
 
         b, n, _ = x.shape
 
