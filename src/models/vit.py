@@ -233,7 +233,7 @@ class ViT(nn.Module):
         else:
             x = x.view(b, -1)
             out = self.out_head(x)
-            logger.info('out: {}'.format(out))
+            # logger.info('out: {}'.format(out))
 
             return out
 
