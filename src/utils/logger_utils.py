@@ -33,7 +33,8 @@ class Logger(object):
         self.logger.addHandler(th)
     def info(self, msg):
         self.logger.info(msg)
-
+    def debug(self, msg):
+        self.logger.debug(msg)
 now = time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
 options = get_parser().parse_args()
 log_dir = os.path.join('../../', 'log')
