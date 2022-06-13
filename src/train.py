@@ -97,7 +97,7 @@ def init_model(opt):
             mlp_dim=64,
             tsfm_dropout=0.1,
             emb_dropout=0.1,
-            use_avg_pool_out=True,
+            use_avg_pool_out=False,
             channels=3
         ).cuda()
     elif opt.model_name == 'vit_small':
