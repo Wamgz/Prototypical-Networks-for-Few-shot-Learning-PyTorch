@@ -174,7 +174,7 @@ class ViT(nn.Module):
             self.to_patch_embedding = nn.Sequential(
                 Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_height, p2=patch_width),
                 nn.Linear(patch_dim, embed_dim), # patch dim: 3072, dim: 1024
-                nn.LayerNorm(embed_dim)
+                # nn.LayerNorm(embed_dim)
             )
 
 
@@ -206,7 +206,7 @@ class ViT(nn.Module):
             for param in self.pretrained_model.head.parameters():
                 param.requires_grad = True
 
-        self.apply(self._init_weights)
+        # self.apply(self._init_weights)
 
     def forward(self, img):
         if self.pretrained:
@@ -241,14 +241,14 @@ class ViT(nn.Module):
         #
         # x = self.to_latent(x) # (batch, patch_size * patch_size)
         # return self.mlp_head(x) # (batch, num_classes)
-    def _init_weights(self, m):
-        if isinstance(m, nn.Linear):
-            trunc_normal_(m.weight, std=.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.LayerNorm):
-            nn.init.constant_(m.bias, 0)
-            nn.init.constant_(m.weight, 1.0)
+    # def _init_weights(self, m):
+    #     if isinstance(m, nn.Linear):
+    #         trunc_normal_(m.weight, std=.02)
+    #         if isinstance(m, nn.Linear) and m.bias is not None:
+    #             nn.init.constant_(m.bias, 0)
+    #     elif isinstance(m, nn.LayerNorm):
+    #         nn.init.constant_(m.bias, 0)
+    #         nn.init.constant_(m.weight, 1.0)
 
     def trainable_params(self):
         if self.pretrained:
