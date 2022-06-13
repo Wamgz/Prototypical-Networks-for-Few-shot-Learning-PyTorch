@@ -224,7 +224,7 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
-        logger.info('transformer: {}'.format(x))
+        # logger.info('transformer: {}'.format(x))
 
         if self.use_avg_pool_out:
             x = self.norm(x)
@@ -234,7 +234,7 @@ class ViT(nn.Module):
         else:
             x = x.view(b, -1)
             out = self.out_head(x)
-            logger.info('out: {}'.format(out))
+            # logger.info('out: {}'.format(out))
 
             return out
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] # 一张图片的所有patch取了平均值 (batch, patch_size * patch_size)
