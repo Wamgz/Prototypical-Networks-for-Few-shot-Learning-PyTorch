@@ -174,7 +174,7 @@ class ViT(nn.Module):
             self.to_patch_embedding = nn.Sequential(
                 Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_height, p2=patch_width),
                 nn.Linear(patch_dim, embed_dim), # patch dim: 3072, dim: 1024
-                # nn.LayerNorm(embed_dim)
+                nn.LayerNorm(embed_dim)
             )
 
 
@@ -206,15 +206,13 @@ class ViT(nn.Module):
             for param in self.pretrained_model.head.parameters():
                 param.requires_grad = True
 
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
 
     def forward(self, img):
         if self.pretrained:
             return self.pretrained_model(img)
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
-        # logger.info('img: {}'.format(img))
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
-        # logger.info('to_patch_embedding: {}'.format(x))
 
         b, n, _ = x.shape
 
@@ -224,7 +222,6 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
-        # logger.info('transformer: {}'.format(x))
 
         if self.use_avg_pool_out:
             x = self.norm(x)
@@ -234,21 +231,20 @@ class ViT(nn.Module):
         else:
             x = x.view(b, -1)
             out = self.out_head(x)
-            # logger.info('out: {}'.format(out))
 
             return out
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] # 一张图片的所有patch取了平均值 (batch, patch_size * patch_size)
         #
         # x = self.to_latent(x) # (batch, patch_size * patch_size)
         # return self.mlp_head(x) # (batch, num_classes)
-    # def _init_weights(self, m):
-    #     if isinstance(m, nn.Linear):
-    #         trunc_normal_(m.weight, std=.02)
-    #         if isinstance(m, nn.Linear) and m.bias is not None:
-    #             nn.init.constant_(m.bias, 0)
-    #     elif isinstance(m, nn.LayerNorm):
-    #         nn.init.constant_(m.bias, 0)
-    #         nn.init.constant_(m.weight, 1.0)
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
 
     def trainable_params(self):
         if self.pretrained:
