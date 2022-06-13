@@ -174,7 +174,7 @@ class ViT(nn.Module):
             self.to_patch_embedding = nn.Sequential(
                 Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=patch_height, p2=patch_width),
                 nn.Linear(patch_dim, embed_dim), # patch dim: 3072, dim: 1024
-                nn.LayerNorm(embed_dim)
+                # nn.LayerNorm(embed_dim)
             )
 
 
