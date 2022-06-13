@@ -65,7 +65,6 @@ class Attention(nn.Module):
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # (600, 16, 65, 64)
 
         dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale # (batch, num_patch * num_patch, num_patch * num_patch)
-        logger.info('dots: {}'.format(dots))
 
         attn = self.attend(dots) # q和k的相似度矩阵, attn: (600, 16, 65, 65)
         attn = self.dropout(attn)
@@ -231,7 +230,6 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
-        logger.info('transformer: {}'.format(x))
 
         if self.use_avg_pool_out:
             x = self.norm(x)
