@@ -239,6 +239,8 @@ class ViT(nn.Module):
         else:
             x = x.view(b, -1)
             out = self.out_head(x)
+            logger.info('out: {}'.format(out))
+
             return out
         # x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0] # 一张图片的所有patch取了平均值 (batch, patch_size * patch_size)
         #
