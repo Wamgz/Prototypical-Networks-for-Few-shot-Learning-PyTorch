@@ -206,6 +206,7 @@ class ViT(nn.Module):
             for param in self.pretrained_model.head.parameters():
                 param.requires_grad = True
         self.softmax = nn.Softmax(dim=-1)
+        self.layer_norm = nn.LayerNorm(out_dim)
         self.apply(self._init_weights)
 
     def forward(self, img):
@@ -231,9 +232,7 @@ class ViT(nn.Module):
         else:
             x = x.view(b, -1)
             out = self.out_head(x)
-            logger.info('out: {}'.format(out))
-            out = self.softmax(out)
-            logger.info('softmax: {}'.format(out))
+            out = self.layer_norm(out)
             return out
 
     def _init_weights(self, m):
