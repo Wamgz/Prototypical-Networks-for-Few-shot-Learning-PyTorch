@@ -14,5 +14,4 @@ python ../train.py \
 --width 64 \
 --iterations 100 \
 --learning_rate 0.0005 \
---optimizer SGD \
 --cuda 0
