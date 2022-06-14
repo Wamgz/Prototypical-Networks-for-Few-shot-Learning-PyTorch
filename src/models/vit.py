@@ -230,9 +230,10 @@ class ViT(nn.Module):
             return x
         else:
             x = x.view(b, -1)
-            out = self.softmax(self.out_head(x))
-            # logger.info('out: {}'.format(out))
-
+            out = self.out_head(x)
+            logger.info('out: {}'.format(out))
+            out = self.softmax(out)
+            logger.info('softmax: {}'.format(out))
             return out
 
     def _init_weights(self, m):
