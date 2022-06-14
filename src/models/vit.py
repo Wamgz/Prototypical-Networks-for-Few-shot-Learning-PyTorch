@@ -232,7 +232,7 @@ class ViT(nn.Module):
         else:
             x = x.view(b, -1)
             out = self.out_head(x)
-            out = self.layer_norm(out)
+            # out = self.layer_norm(out)
             return out
 
     def _init_weights(self, m):
