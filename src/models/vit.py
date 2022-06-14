@@ -225,14 +225,12 @@ class ViT(nn.Module):
         # logger.info('transformer: {}'.format(x))
 
         if self.use_avg_pool_out:
-            # logger.info('use_avg_pool_out norm: {}'.format(x))
             x = self.avg_pool(x)  # B C 1
-            # logger.info('avg_pool: {}'.format(x))
             x = torch.flatten(x, 1)
             return x
         else:
             x = x.view(b, -1)
-            out = self.out_head(x)
+            out = self.softmax(self.out_head(x))
             # logger.info('out: {}'.format(out))
 
             return out
