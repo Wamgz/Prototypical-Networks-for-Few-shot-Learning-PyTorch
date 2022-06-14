@@ -66,7 +66,7 @@ def get_parser():
     parser.add_argument('-lrS', '--lr_scheduler_step',
                         type=int,
                         help='StepLR learning rate scheduler step, default=20',
-                        default=20)
+                        default=50)
 
     parser.add_argument('-lrG', '--lr_scheduler_gamma',
                         type=float,
