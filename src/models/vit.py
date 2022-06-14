@@ -208,23 +208,23 @@ class ViT(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
         self.layer_norm = nn.LayerNorm(out_dim)
         self.apply(self._init_weights)
-
+        self.bn = nn.BatchNorm2d(embed_dim)
     def forward(self, img):
         if self.pretrained:
             return self.pretrained_model(img)
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
+        x = self.bn(x.view(x.shape[0], x.shape[1], x.shape[2], x.shape[3])).view(x.shape[0], x.shape[1], -1)
         # logger.info('to_patch_embedding: {}'.format(x))
         b, n, _ = x.shape
 
         cls_tokens = repeat(self.cls_token, '1 n d -> b n d', b=b) # (batch, 1, patch_size * patch_size) -> (600, 1, 1024)
         x = torch.cat((cls_tokens, x), dim=1) # (batch, num_patch + 1, patch_size * patch_size) ->（600, 65, 1024）
-        x += self.pos_embedding[:, :(n + 1)] # (batch, num_patch + 1, patch_size * patch_size) ->（600, 65, 1024）
+        x += self.pos_embedding[:, :(n + 1)] # (batch, num_patch + 1, embedding_dim) ->（600, 65, 1024）
         x = self.dropout(x)
 
-        x = self.transformer(x) # (batch, num_patch + 1, patch_size * patch_size) -> (600, 65, 1024)
+        x = self.transformer(x) # (batch, num_patch + 1, embedding_dim) -> (600, 65, 1024)
         # logger.info('transformer: {}'.format(x))
-
         if self.use_avg_pool_out:
             x = self.avg_pool(x)  # B C 1
             x = torch.flatten(x, 1)
