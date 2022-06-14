@@ -19,11 +19,12 @@ def pair(t):
 class PreNorm(nn.Module):
     def __init__(self, dim, fn):
         super().__init__()
-        self.norm = nn.LayerNorm(dim) # 需要是float才行，long不行
+        self.norm = nn.BatchNorm1d(dim) # 需要是float才行，long不行
         self.fn = fn
 
     def forward(self, x, **kwargs):
-        return self.fn(self.norm(x), **kwargs) # x: (600, 65, 1024)
+        x = rearrange(x, 'b n e -> b e n')
+        return self.fn(rearrange(self.norm(x), 'b e n -> b n e'), **kwargs) # x: (600, 65, 1024)
 
 
 class FeedForward(nn.Module):
@@ -31,6 +32,9 @@ class FeedForward(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(dim, hidden_dim),
+            Rearrange('b n e -> b e n'),
+            nn.BatchNorm1d(dim),
+            Rearrange('b n e -> b e n'),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(hidden_dim, dim),
@@ -62,15 +66,16 @@ class Attention(nn.Module):
 
     def forward(self, x):
         qkv = self.to_qkv(x).chunk(3, dim=-1) # tuple: ((600, 65, 1024), (600, 65, 1024), (600, 65, 1024))
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # (600, 16, 65, 64)
+        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # (batch, num_head, num_patch, head_dim) -> (600, 16, 65, inner_dim / head)
 
-        dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale # (batch, num_patch * num_patch, num_patch * num_patch)
+        dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale # (batch, num_head, num_patch * num_patch, num_patch * num_patch)
 
         attn = self.attend(dots) # q和k的相似度矩阵, attn: (600, 16, 65, 65)
         attn = self.dropout(attn)
 
-        out = torch.matmul(attn, v) # attn矩阵乘v不是点乘（对v加权），v的维度不变(600, 16, 65, 64)
-        out = rearrange(out, 'b h n d -> b n (h d)') # (600, 65, 1024)
+        out = torch.matmul(attn, v) # attn矩阵乘v不是点乘（对v加权），v的维度不变
+        out = rearrange(out, 'b h n d -> b n (h d)') # (batch, num_patch, num_head * head_dim(inner_dim))
+
         return self.to_out(out)
 
 
@@ -214,12 +219,11 @@ class ViT(nn.Module):
             return self.pretrained_model(img)
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
-        x = self.bn(x.view(x.shape[0], x.shape[1], x.shape[2], x.shape[3])).view(x.shape[0], x.shape[1], -1)
         # logger.info('to_patch_embedding: {}'.format(x))
         b, n, _ = x.shape
 
-        cls_tokens = repeat(self.cls_token, '1 n d -> b n d', b=b) # (batch, 1, patch_size * patch_size) -> (600, 1, 1024)
-        x = torch.cat((cls_tokens, x), dim=1) # (batch, num_patch + 1, patch_size * patch_size) ->（600, 65, 1024）
+        cls_tokens = repeat(self.cls_token, '1 n d -> b n d', b=b) # (batch, 1, embed_dim) -> (600, 1, 1024)
+        x = torch.cat((cls_tokens, x), dim=1) # (batch, num_patch + 1, embed_dim) ->（600, 65, 1024）
         x += self.pos_embedding[:, :(n + 1)] # (batch, num_patch + 1, embedding_dim) ->（600, 65, 1024）
         x = self.dropout(x)
 
