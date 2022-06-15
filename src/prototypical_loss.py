@@ -70,7 +70,6 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
 
     # support的每个类取前n_support个, [tensor[0, 1, 2, 3, 4], tensor(5, 6, 10, 11, 12), ····]
     support_idxs = list(map(supp_idxs, classes)) #list: (opt.classes_per_it_tr, opt.num_support_tr), format: [tensor([ 67, 142, 257, 303, 420]), tensor([  7, 193, 307, 325, 350]), ····]
-
     prototypes = torch.stack([model_outputs[idx_list].mean(0) for idx_list in support_idxs]) # (batch, h' * w' * c')
 
     # FIXME when torch will support where as np
@@ -78,7 +77,16 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, dist='euclidean
 
     query_samples = model_outputs[query_idxs]
     dists = dist_loss(query_samples, prototypes, dist)
-
+    # aux_task = torch.cat([support.view(1, self.args.shot, self.args.way, emb_dim),
+    #                       query.view(1, self.args.query, self.args.way, emb_dim)], 1)  # T x (K+Kq) x N x d
+    # num_query = np.prod(aux_task.shape[1:3])
+    # aux_task = aux_task.permute([0, 2, 1, 3])
+    # aux_task = aux_task.contiguous().view(-1, self.args.shot + self.args.query, emb_dim)
+    # # apply the transformation over the Aug Task
+    # aux_emb = self.slf_attn(aux_task, aux_task, aux_task)  # T x N x (K+Kq) x d
+    # # compute class mean
+    # aux_emb = aux_emb.view(num_batch, self.args.way, self.args.shot + self.args.query, emb_dim)
+    # aux_center = torch.mean(aux_emb, 2)  # T x N x d
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1) #(n_classes, n_query, n_prototypes(n_classes))
     # logger.info('log_p_y: {}'.format(log_p_y))
 

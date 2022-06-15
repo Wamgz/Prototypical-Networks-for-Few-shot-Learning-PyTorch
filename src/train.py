@@ -88,11 +88,11 @@ def init_model(opt):
     elif opt.model_name == 'vit':
         return ViT(
             image_size=96,
-            patch_size=16,
+            patch_size=32,
             out_dim=64,
             embed_dim=64,
             depth=4,
-            heads=8,
+            heads=4,
             dim_head=8,
             mlp_dim=64,
             tsfm_dropout=0.1,
@@ -180,7 +180,10 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             optim.zero_grad()
             x, y = batch  # x: (batch, C, H, W), y:(batch, )
             x, y = x.cuda(), y.cuda()
-            model_output = model(x)  # (batch, H * W * z_dim)
+            model_output = model(x)  # (batch, (num_patch + 1) * z_dim)
+            classes = torch.unique(y)
+            support_idxs = torch.stack(list(map(lambda c: y.eq(c).nonzero()[opt.num_support_tr:], classes))).view(-1)
+            query_idxs = torch.stack(list(map(lambda c: y.eq(c).nonzero()[opt.num_support_tr:], classes))).view(-1)
             loss, acc = loss_fn(model_output, labels=y,
                                 n_support=opt.num_support_tr,
                                 n_query=opt.num_query_tr,
