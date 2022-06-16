@@ -230,7 +230,8 @@ class ViT(nn.Module):
         x = self.transformer(x) # (batch, num_patch + 1, embedding_dim) -> (600, 65, 1024)
         # logger.info('transformer: {}'.format(x))
         if self.use_avg_pool_out:
-            x = self.avg_pool(x)  # B C 1
+            x = self.norm(x) # (batch, num_patch + 1, embedding_dim)
+            x = self.avg_pool(x.transpose(0, 2, 1)).transpose(0, 2, 1)  # B C 1
             x = torch.flatten(x, 1)
             return x
         else:
