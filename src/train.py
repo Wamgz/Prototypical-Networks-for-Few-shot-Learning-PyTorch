@@ -88,16 +88,16 @@ def init_model(opt):
     elif opt.model_name == 'vit':
         return ViT(
             image_size=96,
-            patch_size=32,
+            patch_size=8,
             out_dim=64,
             embed_dim=64,
             depth=4,
-            heads=4,
+            heads=8,
             dim_head=8,
             mlp_dim=64,
             tsfm_dropout=0.1,
             emb_dropout=0.1,
-            use_avg_pool_out=False,
+            use_avg_pool_out=True,
             channels=3
         ).cuda()
     elif opt.model_name == 'vit_small':
