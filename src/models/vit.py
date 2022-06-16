@@ -231,7 +231,7 @@ class ViT(nn.Module):
         # logger.info('transformer: {}'.format(x))
         if self.use_avg_pool_out:
             x = self.norm(x) # (batch, num_patch + 1, embedding_dim)
-            x = self.avg_pool(x.transpose(0, 2, 1)).transpose(0, 2, 1)  # B C 1
+            x = self.avg_pool(x.transpose(1, 2))  # B C 1
             x = torch.flatten(x, 1)
             return x
         else:
@@ -275,10 +275,10 @@ if __name__ == '__main__':
             mlp_dim=64,
             tsfm_dropout=0.1,
             emb_dropout=0.1,
-            use_avg_pool_out=False,
+            use_avg_pool_out=True,
             channels=3
         )
 
     x = torch.randn((400, 3, 96, 96))
-    print(x)
-    num_param = get_parameter_number(model)
+    print(model(x).shape)
+    # num_param = get_parameter_number(model)
