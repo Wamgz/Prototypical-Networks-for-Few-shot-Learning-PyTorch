@@ -4,14 +4,14 @@ python ../train.py \
 --epochs 3000 \
 --model_name swin_transformer \
 --dataset_name miniImagenet \
---classes_per_it_tr 20 \
+--classes_per_it_tr 5 \
 --num_support_tr 5 \
 --num_query_tr 15 \
---classes_per_it_val 16 \
+--classes_per_it_val 5 \
 --num_support_val 5 \
 --num_query_val 15 \
 --height 64 \
 --width 64 \
 --iterations 100 \
---learning_rate 0.0005 \
---cuda 0
+--learning_rate 0.001 \
+--cuda 3
