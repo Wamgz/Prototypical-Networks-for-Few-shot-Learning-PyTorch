@@ -79,7 +79,7 @@ def get_parser():
                         default=100)
 
     parser.add_argument('-use_aux_loss', '--use_aux_loss',
-                        type=int,
+                        type=bool,
                         help='whether to use aux loss',
                         default=False)
 
