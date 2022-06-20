@@ -159,8 +159,11 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
         best_state = None
     train_loss = []
     train_acc = []
+    train_xentropy_loss = []
     val_loss = []
     val_acc = []
+    val_xentropy_loss = []
+
     best_acc = 0
 
     best_model_path = os.path.join(opt.experiment_root,
@@ -184,20 +187,24 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
             classes = torch.unique(y)
             support_idxs = torch.stack(list(map(lambda c: y.eq(c).nonzero()[opt.num_support_tr:], classes))).view(-1)
             query_idxs = torch.stack(list(map(lambda c: y.eq(c).nonzero()[opt.num_support_tr:], classes))).view(-1)
-            loss, acc = loss_fn(model_output, labels=y,
+            loss, x_entropy, acc = loss_fn(model_output, labels=y,
                                 n_support=opt.num_support_tr,
                                 n_query=opt.num_query_tr,
                                 dist=opt.dist,
                                 classes_dict=tr_dataset.train_labels(),
                                 aux_loss=opt.use_aux_loss,
                                 scale=opt.balance_scale)
-            loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
+            total_loss = loss + x_entropy
+            total_loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()
+            train_xentropy_loss.append(x_entropy.detach())
             train_loss.append(loss.detach())
             train_acc.append(acc.detach())
         train_avg_loss = torch.tensor(train_loss[-opt.iterations:]).mean()
         train_avg_acc = torch.tensor(train_acc[-opt.iterations:]).mean()
-        logger.info('Avg Train Loss: {}, Avg Train Acc: {}'.format(train_avg_loss, train_avg_acc))
+        train_avg_x_entropy = torch.tensor(train_xentropy_loss[-opt.iterations:]).mean()
+        logger.info('Avg Train Loss: {}, Avg Train Xentropy: {}, Avg Train Acc: {}'.format(train_avg_loss, train_avg_x_entropy, train_avg_acc))
+        append2pane(torch.FloatTensor([epoch]), x_entropy, env, train_loss_pane)
         append2pane(torch.FloatTensor([epoch]), train_avg_loss, env, train_loss_pane)
         append2pane(torch.FloatTensor([epoch]), train_avg_acc, env, train_acc_pane)
         lr_scheduler.step()
@@ -211,24 +218,28 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                 x, y = batch
                 x, y = x.cuda(), y.cuda()
                 model_output = model(x)
-                loss, acc = loss_fn(model_output, labels=y,
+                loss, x_entropy, acc = loss_fn(model_output, labels=y,
                                     n_support=opt.num_support_val,
                                     n_query=opt.num_query_val,
                                     dist=opt.dist,
                                     classes_dict=val_dataset.val_labels(),
                                     aux_loss=opt.use_aux_loss,
                                     scale=opt.balance_scale)
-                val_loss.append(loss.detach())
+                total_loss = loss + x_entropy
+                val_xentropy_loss.append(x_entropy.detach())
+                val_loss.append(total_loss.detach())
                 val_acc.append(acc.detach())
             val_avg_loss = torch.tensor(val_loss[-opt.iterations:]).mean()
+            val_avg_xentropy = torch.tensor(val_xentropy_loss[-opt.iterations:]).mean()
             val_avg_acc = torch.tensor(val_acc[-opt.iterations:]).mean()
             postfix = ' (Best)' if val_avg_acc >= best_acc else ' (Best: {})'.format(
                 best_acc)
+            append2pane(torch.FloatTensor([epoch]), x_entropy, env, val_loss_pane)
             append2pane(torch.FloatTensor([epoch]), val_avg_loss, env, val_loss_pane)
             append2pane(torch.FloatTensor([epoch]), val_avg_acc, env, val_acc_pane)
 
-            logger.info('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
-                val_avg_loss, val_avg_acc, postfix))
+            logger.info('Avg Val Loss: {}, Avg Val Xentropy: {}, Avg Val Acc: {}{}'.format(
+                val_avg_loss, val_avg_xentropy, val_avg_acc, postfix))
             if val_avg_acc >= best_acc:
                 torch.save(model.state_dict(), best_model_path)
                 best_acc = val_avg_acc
@@ -254,7 +265,7 @@ def test(opt, test_dataloader, model, test_dataset=None):
             x, y = batch
             x, y = x.cuda(), y.cuda()
             model_output = model(x)
-            _, acc = loss_fn(model_output, labels=y,
+            _, x_entropy, acc = loss_fn(model_output, labels=y,
                              n_support=opt.num_support_val,
                              n_query=opt.num_query_val,
                              classes_dict=test_dataset.test_labels(),
