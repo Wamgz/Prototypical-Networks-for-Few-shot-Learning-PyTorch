@@ -12,6 +12,6 @@ python ../train.py \
 --num_query_val 15 \
 --height 96 \
 --width 96 \
---iterations 100 \
+--iterations 1000 \
 --learning_rate 0.001 \
 --cuda 2
