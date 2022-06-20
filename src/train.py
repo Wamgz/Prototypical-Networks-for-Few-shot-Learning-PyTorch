@@ -172,8 +172,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                    opt.dataset_name + '_' + opt.model_name + '_' + 'last_model.pth')
     now = time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
     env = Visdom(env=opt.model_name + '-' + opt.dataset_name)
-    train_loss_pane, train_acc_pane = new_pane(env, 'train_loss' + '_' + str(now)), new_pane(env, 'train_acc' + '_' + str(now))
-    val_loss_pane, val_acc_pane = new_pane(env, 'val-loss'  + '_' + str(now)), new_pane(env, 'val_acc' + '_' + str(now))
+    train_loss_pane, train_xentropy_pane, train_acc_pane = new_pane(env, 'train_loss' + '_' + str(now)), new_pane(env, 'train_xentropy' + '_' + str(now)), new_pane(env, 'train_acc' + '_' + str(now))
+    val_loss_pane, val_xentropy_pane, val_acc_pane = new_pane(env, 'val-loss'  + '_' + str(now)), new_pane(env, 'val_xentropy' + '_' + str(now)), new_pane(env, 'val_acc' + '_' + str(now))
 
     for epoch in range(opt.epochs):
         logger.info('=== Epoch: {}, Learning Rate : {} === '.format(epoch, optim.state_dict()['param_groups'][0]['lr']))
@@ -204,7 +204,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
         train_avg_acc = torch.tensor(train_acc[-opt.iterations:]).mean()
         train_avg_x_entropy = torch.tensor(train_xentropy_loss[-opt.iterations:]).mean()
         logger.info('Avg Train Loss: {}, Avg Train Xentropy: {}, Avg Train Acc: {}'.format(train_avg_loss, train_avg_x_entropy, train_avg_acc))
-        append2pane(torch.FloatTensor([epoch]), x_entropy, env, train_loss_pane)
+        append2pane(torch.FloatTensor([epoch]), x_entropy, env, train_xentropy_pane)
         append2pane(torch.FloatTensor([epoch]), train_avg_loss, env, train_loss_pane)
         append2pane(torch.FloatTensor([epoch]), train_avg_acc, env, train_acc_pane)
         lr_scheduler.step()
@@ -234,7 +234,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
             val_avg_acc = torch.tensor(val_acc[-opt.iterations:]).mean()
             postfix = ' (Best)' if val_avg_acc >= best_acc else ' (Best: {})'.format(
                 best_acc)
-            append2pane(torch.FloatTensor([epoch]), x_entropy, env, val_loss_pane)
+            append2pane(torch.FloatTensor([epoch]), x_entropy, env, val_xentropy_pane)
             append2pane(torch.FloatTensor([epoch]), val_avg_loss, env, val_loss_pane)
             append2pane(torch.FloatTensor([epoch]), val_avg_acc, env, val_acc_pane)
 
