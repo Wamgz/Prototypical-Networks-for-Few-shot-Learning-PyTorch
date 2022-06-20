@@ -15,5 +15,5 @@ python ../train.py \
 --iterations 1000 \
 --learning_rate 0.001 \
 --use_aux_loss true \
---balance_scale 0.1
+--balance_scale 0.1 \
 --cuda 3
