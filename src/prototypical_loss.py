@@ -107,8 +107,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, d
 
         for i in range(labels.shape[0]):
             labels[i] = classes_dict[labels[i].item()]
-        labels_one_hot = F.one_hot(labels.view(-1), num_total_class)
-        x_entropy = F.cross_entropy(classification_hat, labels_one_hot)
+        x_entropy = F.cross_entropy(classification_hat, labels)
     logger.info('loss: {}, x_entropy: {}'.format(loss_val, x_entropy))
     return loss_val + x_entropy,  acc_val
 
