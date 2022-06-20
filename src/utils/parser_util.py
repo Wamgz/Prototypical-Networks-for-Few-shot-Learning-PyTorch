@@ -119,9 +119,9 @@ def get_parser():
                         default=100)
 
     parser.add_argument('-balance_scale', '--balance_scale',
-                        type=int,
+                        type=float,
                         help='scale cross entropy loss to aux euclidean distance loss',
-                        default=1)
+                        default=1.0)
 
     parser.add_argument('-seed', '--manual_seed',
                         type=int,
