@@ -104,11 +104,12 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, d
             mlp = mlp.cuda()
         model_outputs = mlp(model_outputs)
         classification_hat = F.log_softmax(model_outputs, -1)
-
+        logger.info('labels.shape, labels: {}, classes_dict: {}'.format(labels.shape, labels, classes_dict))
         for i in range(labels.shape[0]):
             labels[i] = classes_dict[labels[i].item()]
+        logger.info('labels.shape, labels: {}, classes_dict: {}'.format(labels.shape, labels, classes_dict))
         x_entropy = F.cross_entropy(classification_hat, labels)
-    logger.info('loss: {}, x_entropy: {}'.format(loss_val, x_entropy))
+        logger.info('loss: {}, x_entropy: {}'.format(loss_val, x_entropy))
     return loss_val + x_entropy,  acc_val
 
 
