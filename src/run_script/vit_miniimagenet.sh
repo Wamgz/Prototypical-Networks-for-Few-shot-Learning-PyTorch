@@ -14,4 +14,5 @@ python ../train.py \
 --width 96 \
 --iterations 1000 \
 --learning_rate 0.001 \
+--use_aux_loss true \
 --cuda 2
