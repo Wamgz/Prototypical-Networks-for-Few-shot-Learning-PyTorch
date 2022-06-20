@@ -105,7 +105,6 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, d
         model_outputs = mlp(model_outputs)
         classification_hat = F.log_softmax(model_outputs, -1)
         x_entropy = F.cross_entropy(classification_hat, labels)
-        logger.info('loss: {}, x_entropy: {}'.format(loss_val, x_entropy))
     return loss_val, scale * x_entropy,  acc_val
 
 
