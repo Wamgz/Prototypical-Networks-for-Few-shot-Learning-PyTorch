@@ -15,4 +15,4 @@ python ../train.py \
 --iterations 1000 \
 --learning_rate 0.001 \
 --use_aux_loss true \
---cuda 2
+--cuda 3
