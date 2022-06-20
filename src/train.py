@@ -76,7 +76,7 @@ def init_dataloader(opt, mode):
     dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler, **dataloader_params)
     if torch.cuda.is_available():
         dataloader = DataFetcher(dataloader)
-    return dataloader
+    return dataset, dataloader
 
 
 def init_model(opt):
@@ -150,7 +150,7 @@ def save_list_to_file(path, thelist):
             f.write("%s\n" % item)
 
 
-def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
+def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_dataset, val_dataloader=None):
     '''
     Train the model with the prototypical learning algorithm
     '''
@@ -187,8 +187,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             loss, acc = loss_fn(model_output, labels=y,
                                 n_support=opt.num_support_tr,
                                 n_query=opt.num_query_tr,
-                                dist=opt.dist)
-            # logger.info("loss: {}".format(loss))
+                                dist=opt.dist,
+                                classes_dict=tr_dataset.train_labels())
             loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()
             train_loss.append(loss.detach())
@@ -211,7 +211,9 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                 model_output = model(x)
                 loss, acc = loss_fn(model_output, labels=y,
                                     n_support=opt.num_support_val,
-                                    n_query=opt.num_query_val)
+                                    n_query=opt.num_query_val,
+                                    dist=opt.dist,
+                                    classes_dict=val_dataset.val_labels())
                 val_loss.append(loss.detach())
                 val_acc.append(acc.detach())
             val_avg_loss = torch.tensor(val_loss[-opt.iterations:]).mean()
@@ -289,10 +291,10 @@ def main():
     if not os.path.exists(options.experiment_root):
         os.makedirs(options.experiment_root)
 
-    tr_dataloader = init_dataloader(options, 'train')
-    val_dataloader = init_dataloader(options, 'val')
+    tr_dataset, tr_dataloader = init_dataloader(options, 'train')
+    val_dataset, val_dataloader = init_dataloader(options, 'val')
     # trainval_dataloader = init_dataloader(options, 'trainval')
-    test_dataloader = init_dataloader(options, 'test')
+    test_dataset, test_dataloader = init_dataloader(options, 'test')
 
     model = init_model(options)
 
@@ -303,7 +305,9 @@ def main():
                 val_dataloader=val_dataloader,
                 model=model,
                 optim=optim,
-                lr_scheduler=lr_scheduler)
+                lr_scheduler=lr_scheduler,
+                tr_dataset=tr_dataset,
+                val_dataset=val_dataset)
     best_state, best_acc, train_loss, train_acc, val_loss, val_acc = res
     logger.info('Testing with last model..')
     test(opt=options,

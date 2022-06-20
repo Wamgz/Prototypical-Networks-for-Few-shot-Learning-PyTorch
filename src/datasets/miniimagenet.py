@@ -70,6 +70,22 @@ class MiniImageNet(data.Dataset):
     def __len__(self):
         return len(self.x)
 
+    def train_labels(self):
+        map = {}
+        for i in range(64):
+            map[i] = i
+        return map
+    def val_labels(self):
+        map = {}
+        for i in range(16):
+            map[i + 64] = i
+        return map
+
+    def test_labels(self):
+        map = {}
+        for i in range(16):
+            map[i + 80] = i
+        return map
 class FastCollate:
     def __init__(self, nw, ns, nq, bs):
         self.nw, self.ns, self.nq = nw, ns, nq
@@ -87,6 +103,7 @@ class FastCollate:
         ).reshape(-1, self.bs).permute(1, 0).reshape(-1)
         # print(targets, episodic_targets)
         return tensor, targets, episodic_targets
+
 
 if __name__ == '__main__':
     options = get_parser().parse_args()

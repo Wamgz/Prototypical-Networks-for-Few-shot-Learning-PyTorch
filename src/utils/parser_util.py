@@ -108,6 +108,16 @@ def get_parser():
                         help='number of samples per class to use as query for validation, default=15',
                         default=15)
 
+    parser.add_argument('-total_classes', '--total_classes',
+                        type=int,
+                        help='number of dataset total classes, mini-imagenet: 100',
+                        default=100)
+
+    parser.add_argument('-balance_scale', '--balance_scale',
+                        type=int,
+                        help='scale cross entropy loss to aux euclidean distance loss',
+                        default=1)
+
     parser.add_argument('-seed', '--manual_seed',
                         type=int,
                         help='input for the manual seeds initializations',
