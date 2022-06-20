@@ -188,7 +188,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                 n_support=opt.num_support_tr,
                                 n_query=opt.num_query_tr,
                                 dist=opt.dist,
-                                classes_dict=tr_dataset.train_labels())
+                                classes_dict=tr_dataset.train_labels(),
+                                aux_loss=opt.use_aux_loss)
             loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()
             train_loss.append(loss.detach())
@@ -213,7 +214,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                     n_support=opt.num_support_val,
                                     n_query=opt.num_query_val,
                                     dist=opt.dist,
-                                    classes_dict=val_dataset.val_labels())
+                                    classes_dict=val_dataset.val_labels(),
+                                    aux_loss=opt.use_aux_loss)
                 val_loss.append(loss.detach())
                 val_acc.append(acc.detach())
             val_avg_loss = torch.tensor(val_loss[-opt.iterations:]).mean()
@@ -239,7 +241,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
     return best_state, best_acc, train_loss, train_acc, val_loss, val_acc
 
 
-def test(opt, test_dataloader, model):
+def test(opt, test_dataloader, model, test_dataset=None):
     '''
     Test the model trained with the prototypical learning algorithm
     '''
@@ -252,7 +254,9 @@ def test(opt, test_dataloader, model):
             model_output = model(x)
             _, acc = loss_fn(model_output, labels=y,
                              n_support=opt.num_support_val,
-                             n_query=opt.num_query_val)
+                             n_query=opt.num_query_val,
+                             classes_dict=test_dataset.test_labels(),
+                             aux_loss=opt.use_aux_loss)
             avg_acc.append(acc.detach())
     avg_acc = torch.tensor(avg_acc).mean()
     logger.info('Test Acc: {}'.format(avg_acc))
@@ -312,14 +316,15 @@ def main():
     logger.info('Testing with last model..')
     test(opt=options,
          test_dataloader=test_dataloader,
-         model=model)
+         model=model,
+         test_dataset=test_dataset)
 
     model.load_state_dict(best_state)
     logger.info('Testing with best model..')
     test(opt=options,
          test_dataloader=test_dataloader,
-         model=model)
-
+         model=model,
+         test_dataset=test_dataset)
 
 if __name__ == '__main__':
     main()

@@ -78,6 +78,11 @@ def get_parser():
                         help='number of episodes per epoch, default=100',
                         default=100)
 
+    parser.add_argument('-use_aux_loss', '--use_aux_loss',
+                        type=int,
+                        help='whether to use aux loss',
+                        default=False)
+
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,
                         help='number of random classes per episode for training, default=60',
