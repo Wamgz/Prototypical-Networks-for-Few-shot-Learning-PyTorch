@@ -12,7 +12,8 @@ python ../train.py \
 --num_query_val 15 \
 --height 96 \
 --width 96 \
---iterations 1 \
+--iterations 1000 \
 --learning_rate 0.001 \
 --use_aux_loss true \
+--balance_scale 0.1
 --cuda 3

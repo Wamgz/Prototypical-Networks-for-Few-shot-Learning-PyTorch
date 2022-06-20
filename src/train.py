@@ -189,7 +189,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                 n_query=opt.num_query_tr,
                                 dist=opt.dist,
                                 classes_dict=tr_dataset.train_labels(),
-                                aux_loss=opt.use_aux_loss)
+                                aux_loss=opt.use_aux_loss,
+                                scale=opt.balance_scale)
             loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()
             train_loss.append(loss.detach())
@@ -215,7 +216,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                     n_query=opt.num_query_val,
                                     dist=opt.dist,
                                     classes_dict=val_dataset.val_labels(),
-                                    aux_loss=opt.use_aux_loss)
+                                    aux_loss=opt.use_aux_loss,
+                                    scale=opt.balance_scale)
                 val_loss.append(loss.detach())
                 val_acc.append(acc.detach())
             val_avg_loss = torch.tensor(val_loss[-opt.iterations:]).mean()
