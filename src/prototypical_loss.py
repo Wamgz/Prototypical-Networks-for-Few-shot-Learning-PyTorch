@@ -41,7 +41,8 @@ def dist_loss(x, y, type='euclidean'):
         return scale * (1 - F.cosine_similarity(x, y, -1))
 
 
-def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, dist='euclidean', cuda=True, aux_loss=True, scale=1):
+def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, dist='euclidean', cuda=True, aux_loss=True, scale=1,
+                      use_join_loss=True):
     '''
     Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
 
@@ -78,16 +79,19 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, d
     query_idxs = torch.stack(list(map(lambda c: labels.eq(c).nonzero()[n_support:], classes))).view(-1) # (n_classes * n_query)
     query_samples = model_outputs[query_idxs] # (class_per_episode * n_support, embedding_dim)
     labels = labels[torch.stack(list(map(lambda c: labels.eq(c).nonzero()[:], classes)))].view(-1)
-
     support_dists = dist_loss(support_samples, prototypes, dist) # (class_per_episode * n_support, class_per_episode)
     query_dists = dist_loss(query_samples, prototypes, dist) # (class_per_episode * n_query, class_per_episode)
 
     support_log_p_y = F.log_softmax(-support_dists, dim=-1).view(n_classes, n_support, -1) # (class_per_episode, n_support + n_query, class_per_episode)
     query_log_p_y = F.log_softmax(-query_dists, dim=-1).view(n_classes, n_query, -1) # (class_per_episode, n_support + n_query, class_per_episode)
+
     log_p_y = torch.cat((support_log_p_y, query_log_p_y), 1)
     target_inds = torch.arange(n_classes).view(n_classes, 1, 1).expand(n_classes, n_support + n_query, 1).long()
     if cuda:
         target_inds = target_inds.cuda()
+    if not use_join_loss:
+        log_p_y = query_log_p_y
+        target_inds = torch.arange(n_classes).view(n_classes, 1, 1).expand(n_classes, n_query, 1).long()
 
     # TODO 关键难以理解的地方：由于在sample的时候就是按照label取的，[0, 10)是第一个label，[10, 20)是第二个label，而计算loss的时候需要对应上，也就是第一个label的数据只需要保留和第一个prototype的距离
     # TODO 同样第二个label的数据只需要保留和第二个prototype的数据
