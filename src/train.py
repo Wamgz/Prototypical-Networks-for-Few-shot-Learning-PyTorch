@@ -196,7 +196,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                 dist=opt.dist,
                                 classes_dict=tr_dataset.train_labels(),
                                 aux_loss=opt.use_aux_loss,
-                                scale=opt.balance_scale)
+                                scale=opt.balance_scale,
+                                use_join_loss=opt.use_join_loss)
             total_loss = loss + x_entropy
             total_loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()

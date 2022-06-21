@@ -83,6 +83,11 @@ def get_parser():
                         help='whether to use aux loss',
                         default=False)
 
+    parser.add_argument('-use_join_loss', '--use_join_loss',
+                        type=bool,
+                        help='whether to use join loss',
+                        default=False)
+
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,
                         help='number of random classes per episode for training, default=60',

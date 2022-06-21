@@ -15,4 +15,5 @@ python ../train.py \
 --iterations 1000 \
 --learning_rate 0.001 \
 --balance_scale 0.1 \
+--use_join_loss false \
 --cuda 2
