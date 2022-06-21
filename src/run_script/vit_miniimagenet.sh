@@ -16,6 +16,6 @@ python ../train.py \
 --learning_rate 0.001 \
 --balance_scale 0.1 \
 --use_join_loss false \
---cuda 2 \
+--cuda 0 \
 --use_aux_loss false \
 --comment "不加上aux loss"
