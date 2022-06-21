@@ -17,4 +17,5 @@ python ../train.py \
 --balance_scale 0.1 \
 --use_join_loss false \
 --cuda 2 \
---comment "只使用query进行loss计算"
+--use_aux_loss \
+--comment "加上aux loss"

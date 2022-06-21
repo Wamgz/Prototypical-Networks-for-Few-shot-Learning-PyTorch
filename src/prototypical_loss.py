@@ -82,8 +82,8 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, d
     support_dists = dist_loss(support_samples, prototypes, dist) # (class_per_episode * n_support, class_per_episode)
     query_dists = dist_loss(query_samples, prototypes, dist) # (class_per_episode * n_query, class_per_episode)
 
-    support_log_p_y = F.log_softmax(-support_dists, dim=-1).view(n_classes, n_support, -1) # (class_per_episode, n_support + n_query, class_per_episode)
-    query_log_p_y = F.log_softmax(-query_dists, dim=-1).view(n_classes, n_query, -1) # (class_per_episode, n_support + n_query, class_per_episode)
+    support_log_p_y = F.log_softmax(-support_dists, dim=-1).view(n_classes, n_support, -1) # (class_per_episode, n_support, class_per_episode)
+    query_log_p_y = F.log_softmax(-query_dists, dim=-1).view(n_classes, n_query, -1) # (class_per_episode, n_support, class_per_episode)
 
     log_p_y = torch.cat((support_log_p_y, query_log_p_y), 1)
     target_inds = torch.arange(n_classes).view(n_classes, 1, 1).expand(n_classes, n_support + n_query, 1).long()
