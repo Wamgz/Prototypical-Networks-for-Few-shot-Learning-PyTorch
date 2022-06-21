@@ -145,4 +145,8 @@ def get_parser():
                         help='use gpu or cpu',
                         default='-1')
 
+    parser.add_argument('--comment',
+                        type=str,
+                        help='comment',
+                        default='')
     return parser

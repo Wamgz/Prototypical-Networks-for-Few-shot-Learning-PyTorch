@@ -16,4 +16,5 @@ python ../train.py \
 --learning_rate 0.001 \
 --balance_scale 0.1 \
 --use_join_loss false \
---cuda 2
+--cuda 2 \
+--comment "只使用query进行loss计算"
