@@ -118,6 +118,10 @@ def get_parser():
                         help='number of dataset total classes, mini-imagenet: 100',
                         default=100)
 
+    parser.add_argument('-warm_up_epochs', '--warm_up_epochs',
+                        type=int,
+                        help='warm up epochs',
+                        default=5)
     parser.add_argument('-balance_scale', '--balance_scale',
                         type=float,
                         help='scale cross entropy loss to aux euclidean distance loss',

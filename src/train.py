@@ -22,7 +22,7 @@ from torch.utils.tensorboard import SummaryWriter
 from src.utils.visdom_utils import new_pane, append2pane
 import time
 from visdom import Visdom
-
+import math
 options = get_parser().parse_args()
 os.environ['CUDA_VISIBLE_DEVICES'] = options.cuda
 def init_dataset(opt, mode):
@@ -139,9 +139,13 @@ def init_lr_scheduler(opt, optim):
     Initialize the learning rate scheduler
     TODO 调整lr衰减
     '''
-    return torch.optim.lr_scheduler.StepLR(optimizer=optim,
-                                           gamma=opt.lr_scheduler_gamma,
-                                           step_size=opt.lr_scheduler_step)
+    # warm_up_with_cosine_lr
+    warm_up_with_cosine_lr = lambda epoch: epoch / opt.warm_up_epochs if epoch <= opt.warm_up_epochs else 0.5 * (
+                math.cos((epoch - opt.warm_up_epochs) / (opt.epochs - opt.warm_up_epochs) * math.pi) + 1)
+    return torch.optim.lr_scheduler.LambdaLR(optim, lr_lambda=warm_up_with_cosine_lr)
+    # return torch.optim.lr_scheduler.StepLR(optimizer=optim,
+    #                                        gamma=opt.lr_scheduler_gamma,
+    #                                        step_size=opt.lr_scheduler_step)
 
 
 def save_list_to_file(path, thelist):
