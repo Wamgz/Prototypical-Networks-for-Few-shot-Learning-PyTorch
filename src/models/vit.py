@@ -6,7 +6,7 @@ from einops.layers.torch import Rearrange
 import timm
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from src.utils.logger_utils import logger
-
+import torch.nn.functional as F
 
 # helpers
 
@@ -155,7 +155,7 @@ class Mlp(nn.Module):
 class ViT(nn.Module):
     def __init__(self, *, image_size, patch_size, out_dim, embed_dim, depth, heads, mlp_dim, pool='cls', channels=1,
                  dim_head=12, tsfm_dropout=0., emb_dropout=0., feature_only=False, pretrained=False, patch_norm=True, conv_patch_embedding=False,
-                 use_avg_pool_out=False):
+                 use_avg_pool_out=False, use_dual_feature=True):
         super().__init__()
         self.pretrained = pretrained
 
@@ -214,11 +214,20 @@ class ViT(nn.Module):
         self.layer_norm = nn.LayerNorm(out_dim)
         self.apply(self._init_weights)
         self.bn = nn.BatchNorm2d(embed_dim)
+
+        self.use_dual_feature = use_dual_feature
+        self.avg_pool_64 = nn.AdaptiveAvgPool1d(64)
     def forward(self, img):
         if self.pretrained:
             return self.pretrained_model(img)
+
         # x: (batch, C, H, W) -> (600, 1, 256, 256)
         x = self.to_patch_embedding(img) # (batch, num_patch, patch_size * patch_size) -> (600, 64, 1024)
+        if self.use_dual_feature:
+            x_1 = self.to_patch_embedding(F.interpolate(img, [64, 64]))
+            x_2 = self.to_patch_embedding(F.interpolate(img, [32, 32]))
+            x = torch.cat((x, x_1, x_2), dim=1) # num_patch维度拼接
+            x = self.avg_pool_64(x.transpose(1, 2)).transpose(1, 2)
         # logger.info('to_patch_embedding: {}'.format(x))
         b, n, _ = x.shape
 
