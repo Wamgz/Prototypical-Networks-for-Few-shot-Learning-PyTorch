@@ -18,4 +18,4 @@ python ../train.py \
 --use_join_loss false \
 --cuda 2 \
 --use_aux_loss false \
---comment "加上aux loss"
+--comment "不加上aux loss"
