@@ -155,7 +155,7 @@ class Mlp(nn.Module):
 class ViT(nn.Module):
     def __init__(self, *, image_size, patch_size, out_dim, embed_dim, depth, heads, mlp_dim, pool='cls', channels=1,
                  dim_head=12, tsfm_dropout=0., emb_dropout=0., feature_only=False, pretrained=False, patch_norm=True, conv_patch_embedding=False,
-                 use_avg_pool_out=False, use_dual_feature=True):
+                 use_avg_pool_out=False, use_dual_feature=False):
         super().__init__()
         self.pretrained = pretrained
 
