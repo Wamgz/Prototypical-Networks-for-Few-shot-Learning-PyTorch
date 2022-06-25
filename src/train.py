@@ -89,7 +89,7 @@ def init_model(opt):
     elif opt.model_name == 'vit':
         return ViT(
             image_size=96,
-            patch_size=4,
+            patch_size=8,
             out_dim=64,
             embed_dim=64,
             depth=4,

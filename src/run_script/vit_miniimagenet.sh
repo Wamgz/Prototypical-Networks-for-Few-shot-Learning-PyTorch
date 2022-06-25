@@ -17,5 +17,5 @@ python ../train.py \
 --balance_scale 1 \
 --use_join_loss true \
 --cuda 2 \
---use_aux_loss false \
+--use_aux_loss true \
 --comment "加上全局分类头"
