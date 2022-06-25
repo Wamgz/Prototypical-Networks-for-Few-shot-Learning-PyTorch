@@ -228,7 +228,6 @@ class ViT(nn.Module):
             x_2 = self.to_patch_embedding(F.interpolate(img, [32, 32]))
             x = torch.cat((x, x_1, x_2), dim=1) # num_patch维度拼接
             x = self.avg_pool_64(x.transpose(1, 2)).transpose(1, 2)
-        # logger.info('to_patch_embedding: {}'.format(x))
         b, n, _ = x.shape
 
         cls_tokens = repeat(self.cls_token, '1 n d -> b n d', b=b) # (batch, 1, embed_dim) -> (600, 1, 1024)
@@ -237,7 +236,6 @@ class ViT(nn.Module):
         x = self.dropout(x)
 
         x = self.transformer(x) # (batch, num_patch + 1, embedding_dim) -> (600, 65, 1024)
-        # logger.info('transformer: {}'.format(x))
         if self.use_avg_pool_out:
             x = self.norm(x) # (batch, num_patch + 1, embedding_dim)
             x = self.avg_pool(x.transpose(1, 2))  # B C 1

@@ -70,22 +70,9 @@ class MiniImageNet(data.Dataset):
     def __len__(self):
         return len(self.x)
 
-    def train_labels(self):
-        map = {}
-        for i in range(64):
-            map[i] = i
-        return map
-    def val_labels(self):
-        map = {}
-        for i in range(16):
-            map[i + 64] = i
-        return map
+    def total_classes(self):
+        return 100
 
-    def test_labels(self):
-        map = {}
-        for i in range(16):
-            map[i + 80] = i
-        return map
 class FastCollate:
     def __init__(self, nw, ns, nq, bs):
         self.nw, self.ns, self.nq = nw, ns, nq

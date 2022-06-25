@@ -41,7 +41,7 @@ def dist_loss(x, y, type='euclidean'):
         return scale * (1 - F.cosine_similarity(x, y, -1))
 
 
-def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, dist='euclidean', cuda=True, aux_loss=True, scale=1,
+def prototypical_loss(model_outputs, labels, n_support, n_query, mlp, dist='euclidean', cuda=True, aux_loss=True, scale=1,
                       use_join_loss=True):
     '''
     Inspired by https://github.com/jakesnell/prototypical-networks/blob/master/protonets/models/few_shot.py
@@ -102,10 +102,6 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, classes_dict, d
     acc_val = y_hat.eq(target_inds.squeeze(2)).float().mean()
     x_entropy = torch.tensor(0)
     if aux_loss:
-        num_total_class = len(classes_dict.keys())
-        mlp = FeedForward(dim=model_outputs.shape[-1], out_dim=num_total_class)
-        if cuda:
-            mlp = mlp.cuda()
         model_outputs = mlp(model_outputs)
         classification_hat = F.log_softmax(model_outputs, -1)
         x_entropy = F.cross_entropy(classification_hat, labels)

@@ -20,6 +20,7 @@ from data_loaders.data_fetchers import DataFetcher
 from src.data_loaders.prototypical_batch_sampler import PrototypicalBatchSampler
 from torch.utils.tensorboard import SummaryWriter
 from src.utils.visdom_utils import new_pane, append2pane
+from models.gch import FeedForward as MLP
 import time
 from visdom import Visdom
 import math
@@ -153,7 +154,7 @@ def save_list_to_file(path, thelist):
             f.write("%s\n" % item)
 
 
-def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_dataset, val_dataloader=None):
+def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_dataset, mlp=None, val_dataloader=None):
     '''
     Train the model with the prototypical learning algorithm
     '''
@@ -194,10 +195,10 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                 n_support=opt.num_support_tr,
                                 n_query=opt.num_query_tr,
                                 dist=opt.dist,
-                                classes_dict=tr_dataset.train_labels(),
                                 aux_loss=opt.use_aux_loss,
                                 scale=opt.balance_scale,
-                                use_join_loss=opt.use_join_loss)
+                                use_join_loss=opt.use_join_loss,
+                                mlp=mlp)
             total_loss = loss + x_entropy
             total_loss.backward()  # tensor(254.0303, grad_fn=<NegBackward0>)
             optim.step()
@@ -226,7 +227,6 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                     n_support=opt.num_support_val,
                                     n_query=opt.num_query_val,
                                     dist=opt.dist,
-                                    classes_dict=val_dataset.val_labels(),
                                     aux_loss=opt.use_aux_loss,
                                     scale=opt.balance_scale)
                 total_loss = loss + x_entropy
@@ -272,7 +272,6 @@ def test(opt, test_dataloader, model, test_dataset=None):
             _, x_entropy, acc = loss_fn(model_output, labels=y,
                              n_support=opt.num_support_val,
                              n_query=opt.num_query_val,
-                             classes_dict=test_dataset.test_labels(),
                              aux_loss=opt.use_aux_loss)
             avg_acc.append(acc.detach())
     avg_acc = torch.tensor(avg_acc).mean()
@@ -314,13 +313,14 @@ def main():
 
     tr_dataset, tr_dataloader = init_dataloader(options, 'train')
     val_dataset, val_dataloader = init_dataloader(options, 'val')
-    # trainval_dataloader = init_dataloader(options, 'trainval')
     test_dataset, test_dataloader = init_dataloader(options, 'test')
 
     model = init_model(options)
-
     optim = init_optim(options, model)
     lr_scheduler = init_lr_scheduler(options, optim)
+
+    ## TODO 这里暂时写死，只能用于vit使用
+    mlp = MLP(dim=64, out_dim=64)
     res = train(opt=options,
                 tr_dataloader=tr_dataloader,
                 val_dataloader=val_dataloader,
@@ -328,7 +328,8 @@ def main():
                 optim=optim,
                 lr_scheduler=lr_scheduler,
                 tr_dataset=tr_dataset,
-                val_dataset=val_dataset)
+                val_dataset=val_dataset,
+                mlp=mlp)
     best_state, best_acc, train_loss, train_acc, val_loss, val_acc = res
     logger.info('Testing with last model..')
     test(opt=options,
