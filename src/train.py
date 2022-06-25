@@ -121,12 +121,16 @@ def init_model(opt):
     raise ValueError('Unsupported model_name {}'.format(opt.model_name))
 
 
-def init_optim(opt, model):
+def init_optim(opt, model, mlp=None):
     '''
     Initialize optimizer
     '''
     if opt.optimizer == 'Adam':
-        return torch.optim.Adam(params=model.trainable_params(),
+        trainable_params = []
+        trainable_params.append({'params': model.trainable_params()})
+        if mlp != None:
+            trainable_params.append({'params': mlp.parameters()})
+        return torch.optim.Adam(trainable_params,
                             lr=opt.learning_rate,
                             weight_decay=opt.weight_decay)
     elif opt.optimizer == 'SGD':
@@ -317,10 +321,12 @@ def main():
 
     model = init_model(options)
     optim = init_optim(options, model)
-    lr_scheduler = init_lr_scheduler(options, optim)
 
     ## TODO 这里暂时写死，只能用于vit使用
-    mlp = MLP(dim=64, out_dim=64)
+    mlp = MLP(dim=64, out_dim=64).cuda()
+    if options.model_name == 'vit':
+        optim = init_optim(options, model, mlp)
+    lr_scheduler = init_lr_scheduler(options, optim)
     res = train(opt=options,
                 tr_dataloader=tr_dataloader,
                 val_dataloader=val_dataloader,
