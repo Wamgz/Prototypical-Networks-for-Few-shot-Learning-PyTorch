@@ -14,8 +14,8 @@ python ../train.py \
 --width 96 \
 --iterations 1000 \
 --learning_rate 0.001 \
---balance_scale 0.1 \
+--balance_scale 1 \
 --use_join_loss false \
---cuda 0 \
---use_aux_loss false \
---comment "不加上aux loss"
+--cuda 2 \
+--use_aux_loss true \
+--comment "加上全局分类头"
