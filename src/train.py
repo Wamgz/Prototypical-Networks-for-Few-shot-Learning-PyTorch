@@ -187,6 +187,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
         logger.info('=== Epoch: {}, Learning Rate : {} === '.format(epoch, optim.state_dict()['param_groups'][0]['lr']))
         tr_iter = iter(tr_dataloader)
         model.train()
+        mlp.train()
         for batch in tqdm(tr_iter):
             optim.zero_grad()
             x, y = batch  # x: (batch, C, H, W), y:(batch, )
@@ -221,6 +222,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
             continue
         val_iter = iter(val_dataloader)
         model.eval()
+        mlp.eval()
         val_avg_loss, val_avg_acc = 0., 0.
         with torch.no_grad():
             for batch in val_iter:
@@ -232,7 +234,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, tr_dataset, val_datase
                                     n_query=opt.num_query_val,
                                     dist=opt.dist,
                                     aux_loss=opt.use_aux_loss,
-                                    scale=opt.balance_scale)
+                                    scale=opt.balance_scale,
+                                    mlp=mlp)
                 total_loss = loss + x_entropy
                 val_xentropy_loss.append(x_entropy.detach())
                 val_loss.append(total_loss.detach())
