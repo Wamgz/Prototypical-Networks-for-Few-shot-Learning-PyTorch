@@ -93,8 +93,8 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, mlp, dist='eucl
         log_p_y = query_log_p_y
         target_inds = torch.arange(n_classes).view(n_classes, 1, 1).expand(n_classes, n_query, 1).long()
 
-    # TODO 关键难以理解的地方：由于在sample的时候就是按照label取的，[0, 10)是第一个label，[10, 20)是第二个label，而计算loss的时候需要对应上，也就是第一个label的数据只需要保留和第一个prototype的距离
-    # TODO 同样第二个label的数据只需要保留和第二个prototype的数据
+    # 关键难以理解的地方：由于在sample的时候就是按照label取的，[0, 10)是第一个label，[10, 20)是第二个label，而计算loss的时候需要对应上，也就是第一个label的数据只需要保留和第一个prototype的距离
+    # 同样第二个label的数据只需要保留和第二个prototype的数据
     loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
     _, y_hat = log_p_y.max(2)
 
