@@ -167,7 +167,6 @@ class ViT(nn.Module):
         self.num_patch = (image_height // patch_height) * (image_width // patch_width) # 64
         patch_dim = channels * patch_height * patch_width # 3072
         assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
-
         self.conv_patch_embedding = conv_patch_embedding
         if self.conv_patch_embedding:
             ## 卷积实现patch_embedding
