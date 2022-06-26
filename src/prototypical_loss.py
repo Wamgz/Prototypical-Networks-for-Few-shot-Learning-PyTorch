@@ -100,7 +100,7 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, mlp, dist='eucl
 
     # logger.info('correct idx: {}'.format(y_hat))
     acc_val = y_hat.eq(target_inds.squeeze(2)).float().mean()
-    x_entropy = torch.tensor(0)
+    x_entropy = torch.tensor(0, requires_grad=False)
     if aux_loss:
         model_outputs = mlp(model_outputs)
         classification_hat = F.log_softmax(model_outputs, -1)
