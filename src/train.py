@@ -145,7 +145,7 @@ def init_lr_scheduler(opt, optim):
     '''
     # warm_up_with_cosine_lr
     warm_up_with_cosine_lr = lambda epoch: (epoch + 1) / opt.warm_up_epochs if epoch <= opt.warm_up_epochs else 0.1 * (
-                math.cos((epoch + 1 - opt.warm_up_epochs) / (opt.epochs + 1 - opt.warm_up_epochs) * math.pi))
+                math.cos((epoch + 1 - opt.warm_up_epochs) / (opt.epochs + 1 - opt.warm_up_epochs) * math.pi) + 1)
     return torch.optim.lr_scheduler.LambdaLR(optim, lr_lambda=warm_up_with_cosine_lr)
     # return torch.optim.lr_scheduler.StepLR(optimizer=optim,
     #                                        gamma=opt.lr_scheduler_gamma,

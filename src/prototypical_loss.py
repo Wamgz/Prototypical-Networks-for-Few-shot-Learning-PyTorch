@@ -85,21 +85,20 @@ def prototypical_loss(model_outputs, labels, n_support, n_query, mlp, dist='eucl
     support_log_p_y = F.log_softmax(-support_dists, dim=-1).view(n_classes, n_support, -1) # (class_per_episode, n_support, class_per_episode)
     query_log_p_y = F.log_softmax(-query_dists, dim=-1).view(n_classes, n_query, -1) # (class_per_episode, n_support, class_per_episode)
 
-    log_p_y = torch.cat((support_log_p_y, query_log_p_y), 1)
-    target_inds = torch.arange(n_classes).view(n_classes, 1, 1).expand(n_classes, n_support + n_query, 1).long()
+    support_target_inds, query_target_inds = \
+        torch.arange(n_classes).view(n_classes, 1, 1).expand(n_classes, n_support, 1).long(), torch.arange(n_classes).view(n_classes, 1, 1).expand(n_classes, n_query, 1).long()
     if cuda:
-        target_inds = target_inds.cuda()
-    if not use_join_loss:
-        log_p_y = query_log_p_y
-        target_inds = torch.arange(n_classes).view(n_classes, 1, 1).expand(n_classes, n_query, 1).long()
+        support_target_inds, query_target_inds = support_target_inds.cuda(), query_target_inds.cuda()
 
     # 关键难以理解的地方：由于在sample的时候就是按照label取的，[0, 10)是第一个label，[10, 20)是第二个label，而计算loss的时候需要对应上，也就是第一个label的数据只需要保留和第一个prototype的距离
     # 同样第二个label的数据只需要保留和第二个prototype的数据
-    loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
-    _, y_hat = log_p_y.max(2)
+    loss_val = -query_log_p_y.gather(2, query_target_inds).squeeze().view(-1).mean()
+    if use_join_loss:
+        loss_val += -support_log_p_y.gather(2, support_target_inds).squeeze().view(-1).mean()
+    _, y_hat = query_log_p_y.max(2)
 
     # logger.info('correct idx: {}'.format(y_hat))
-    acc_val = y_hat.eq(target_inds.squeeze(2)).float().mean()
+    acc_val = y_hat.eq(query_target_inds.squeeze(2)).float().mean()
     x_entropy = torch.tensor(0, requires_grad=False)
     if aux_loss:
         model_outputs = mlp(model_outputs)
