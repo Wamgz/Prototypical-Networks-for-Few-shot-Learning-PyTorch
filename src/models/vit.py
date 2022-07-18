@@ -65,6 +65,7 @@ class Attention(nn.Module):
         ) if project_out else nn.Identity()
 
     def forward(self, x):
+        batch, num_patch, embed_dim = x.shape
         qkv = self.to_qkv(x).chunk(3, dim=-1) # tuple: ((600, 65, 1024), (600, 65, 1024), (600, 65, 1024))
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b n) h d', h=self.heads), qkv) # (batch, num_head, num_patch, head_dim) -> (600, 16, 65, inner_dim / head)
 
@@ -74,7 +75,7 @@ class Attention(nn.Module):
         attn = self.dropout(attn)
 
         out = torch.matmul(attn, v) # attn矩阵乘v不是点乘（对v加权），v的维度不变
-        out = rearrange(out, '(b n) h d -> b n (h d)') # (batch, num_patch, num_head * head_dim(inner_dim))
+        out = rearrange(out, '(b n) h d -> b n (h d)', b=batch, n=num_patch) # (batch, num_patch, num_head * head_dim(inner_dim))
 
         return self.to_out(out)
 
