@@ -8,6 +8,8 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from src.utils.logger_utils import logger
 import torch.nn.functional as F
 
+torch.set_printoptions(precision=None, threshold=999999, edgeitems=None, linewidth=None, profile=None)
+
 # helpers
 
 def pair(t):
@@ -72,6 +74,7 @@ class Attention(nn.Module):
         dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale # (batch, num_head, num_patch * num_patch, num_patch * num_patch)
 
         attn = self.attend(dots) # q和k的相似度矩阵, attn: (600, 16, 65, 65)
+        print('attn: ', attn[:3, :])
         attn = self.dropout(attn)
 
         out = torch.matmul(attn, v) # attn矩阵乘v不是点乘（对v加权），v的维度不变
